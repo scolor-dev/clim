@@ -1,7 +1,16 @@
-// clim: ショートカットキーだけでMarkdownリンクをコピーするService Worker。
+// clim: ショートカットキーだけで各形式のリンクをコピーするService Worker。
+
+const COMMAND_FORMATS = {
+  "copy-markdown-link": "markdown",
+  "copy-scrapbox-link": "scrapbox",
+  "copy-plain-text-link": "plainText",
+  "copy-html-link": "html"
+};
 
 chrome.commands.onCommand.addListener(async (command) => {
-  if (command !== "copy-markdown-link") {
+  const format = COMMAND_FORMATS[command];
+
+  if (!format) {
     return;
   }
 
@@ -24,11 +33,12 @@ chrome.commands.onCommand.addListener(async (command) => {
     });
 
     const response = await chrome.tabs.sendMessage(tab.id, {
-      type: "CLIM_COPY_MARKDOWN_LINK"
+      type: "CLIM_COPY_LINK",
+      format
     });
 
     if (!response?.ok) {
-      console.warn("[clim] Markdownリンクのコピーに失敗しました。", response?.error);
+      console.warn("[clim] リンクのコピーに失敗しました。", response?.error);
     }
   } catch (error) {
     // chrome:// や Chrome Web Store など、content scriptを実行できないページでは失敗します。

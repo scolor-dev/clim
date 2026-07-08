@@ -1,17 +1,25 @@
-// clim: ページ情報を日本向けに整形し、Markdownリンクとしてコピーするcontent script。
+// clim: ページ情報を日本向けに整形し、複数形式のリンクとしてコピーするcontent script。
+
+var CLIM_FORMAT_LABELS = {
+  markdown: "Markdown",
+  scrapbox: "Scrapbox",
+  plainText: "プレーンテキスト",
+  html: "HTML"
+};
 
 if (!globalThis.__climContentScriptReady) {
   globalThis.__climContentScriptReady = true;
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type !== "CLIM_COPY_MARKDOWN_LINK") {
+    if (message?.type !== "CLIM_COPY_LINK") {
       return false;
     }
 
-    copyCurrentPageAsMarkdown()
-      .then((markdown) => {
-        showToast("Markdownリンクをコピーしました");
-        sendResponse({ ok: true, markdown });
+    copyCurrentPageLink(message.format)
+      .then((text) => {
+        const label = CLIM_FORMAT_LABELS[message.format] ?? "リンク";
+        showToast(`${label}リンクをコピーしました`);
+        sendResponse({ ok: true, text });
       })
       .catch((error) => {
         console.error("[clim] コピーに失敗しました。", error);
@@ -24,13 +32,38 @@ if (!globalThis.__climContentScriptReady) {
   });
 }
 
-async function copyCurrentPageAsMarkdown() {
+async function copyCurrentPageLink(format = "markdown") {
   const cleanTitle = cleanJapaneseTitle(document.title);
   const decodedUrl = decodeJapaneseUrl(window.location.href);
-  const markdown = `[${escapeMarkdownTitle(cleanTitle)}](${escapeMarkdownUrl(decodedUrl)})`;
+  const text = formatLink(format, cleanTitle, decodedUrl);
 
-  await writeToClipboard(markdown);
-  return markdown;
+  await writeToClipboard(text);
+  return text;
+}
+
+function formatLink(format, title, url) {
+  switch (format) {
+    case "scrapbox":
+      return `[${title} ${url}]`;
+    case "plainText":
+      return `${title} ${url}`;
+    case "html":
+      return `<a href="${escapeHtmlAttribute(url)}">${escapeHtmlText(title)}</a>`;
+    case "markdown":
+    default:
+      return `[${escapeMarkdownTitle(title)}](${escapeMarkdownUrl(url)})`;
+  }
+}
+
+function escapeHtmlText(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHtmlAttribute(value) {
+  return escapeHtmlText(value).replace(/"/g, "&quot;");
 }
 
 function decodeJapaneseUrl(url) {

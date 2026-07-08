@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "clim",
-  "description": "日本のWebサイト向けにタイトルとURLを整形し、Markdownリンクとしてコピーします。",
+  "description": "日本のWebサイト向けにタイトルとURLを整形し、複数形式のリンクとしてコピーします。",
   "version": "0.1.0",
   "action": {
     "default_title": "clim"
@@ -28,6 +28,15 @@
         "mac": "MacCtrl+Shift+C"
       },
       "description": "現在のページをMarkdownリンクとしてコピー"
+    },
+    "copy-scrapbox-link": {
+      "description": "現在のページをScrapboxリンクとしてコピー"
+    },
+    "copy-plain-text-link": {
+      "description": "現在のページをプレーンテキストとしてコピー"
+    },
+    "copy-html-link": {
+      "description": "現在のページをHTMLリンクとしてコピー"
     }
   }
 }

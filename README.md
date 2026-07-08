@@ -1,6 +1,6 @@
 # clim
 
-日本のWebサイト向けにタイトルとURLを整形し、MarkdownリンクとしてコピーするChrome拡張のMVPです。
+日本のWebサイト向けにタイトルとURLを整形し、Markdown、Scrapbox、プレーンテキスト、HTMLリンクとしてコピーするChrome拡張のMVPです。
 拡張機能のUIを開かず、ショートカットキーだけで処理が完結します。
 
 ## 構成
@@ -26,7 +26,16 @@
 ```
 
 変更後は `chrome://extensions` で拡張機能の更新ボタンを押してください。
-ショートカットが他の機能と衝突する場合は、`chrome://extensions/shortcuts` から変更できます。
+ショートカットが他の機能と衝突する場合や、他形式を使いたい場合は、`chrome://extensions/shortcuts` から変更できます。
+
+## 対応フォーマット
+
+| コマンド | 出力例 | 初期ショートカット |
+| --- | --- | --- |
+| Markdown | `[タイトル](URL)` | Windows/Linux: `Alt + Shift + C`, Mac: `Control + Shift + C` |
+| Scrapbox | `[タイトル URL]` | 未割り当て |
+| プレーンテキスト | `タイトル URL` | 未割り当て |
+| HTML | `<a href="URL">タイトル</a>` | 未割り当て |
 
 ## 処理内容
 
