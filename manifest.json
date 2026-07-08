@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "clim",
+  "description": "日本のWebサイト向けにタイトルとURLを整形し、Markdownリンクとしてコピーします。",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "clim"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "activeTab",
+    "clipboardWrite",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "commands": {
+    "copy-markdown-link": {
+      "suggested_key": {
+        "default": "Alt+Shift+C",
+        "windows": "Alt+Shift+C",
+        "linux": "Alt+Shift+C",
+        "mac": "MacCtrl+Shift+C"
+      },
+      "description": "現在のページをMarkdownリンクとしてコピー"
+    }
+  }
+}
