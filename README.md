@@ -26,7 +26,7 @@
 ```
 
 変更後は `chrome://extensions` で拡張機能の更新ボタンを押してください。
-ショートカットが他の機能と衝突する場合や、他形式を使いたい場合は、`chrome://extensions/shortcuts` から変更できます。
+ショートカットが他の機能と衝突する場合や、他形式を使いたい場合は、Chromeで `chrome://extensions/shortcuts` を開いて変更できます。
 
 ## 対応フォーマット
 

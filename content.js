@@ -11,13 +11,15 @@ if (!globalThis.__climContentScriptReady) {
   globalThis.__climContentScriptReady = true;
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type !== "CLIM_COPY_LINK") {
+    if (message?.type !== "CLIM_COPY_LINK" && message?.type !== "CLIM_COPY_MARKDOWN_LINK") {
       return false;
     }
 
-    copyCurrentPageLink(message.format)
+    const format = message.type === "CLIM_COPY_MARKDOWN_LINK" ? "markdown" : message.format;
+
+    copyCurrentPageLink(format)
       .then((text) => {
-        const label = CLIM_FORMAT_LABELS[message.format] ?? "リンク";
+        const label = CLIM_FORMAT_LABELS[format] ?? "リンク";
         showToast(`${label}リンクをコピーしました`);
         sendResponse({ ok: true, text });
       })

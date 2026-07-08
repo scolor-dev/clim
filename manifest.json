@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "clim",
-  "description": "日本のWebサイト向けにタイトルとURLを整形し、複数形式のリンクとしてコピーします。",
+  "description": "タイトルとURLを複数形式でコピー。設定: chrome://extensions/shortcuts",
   "version": "0.1.0",
   "action": {
     "default_title": "clim"
@@ -38,5 +38,17 @@
     "copy-html-link": {
       "description": "現在のページをHTMLリンクとしてコピー"
     }
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }
