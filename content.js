@@ -2,6 +2,7 @@
 
 var CLIM_FORMAT_LABELS = {
   markdown: "Markdown",
+  markdownFrontmatter: "Markdown + frontmatter",
   scrapbox: "Scrapbox",
   plainText: "プレーンテキスト",
   html: "HTML"
@@ -110,13 +111,27 @@ function formatLink(format, title, url, metadata) {
       return `${title} ${url}`;
     case "html":
       return `<a href="${escapeHtmlAttribute(url)}">${escapeHtmlText(title)}</a>`;
+    case "markdownFrontmatter":
+      return formatMarkdownFrontmatterLink(title, url, metadata);
     case "markdown":
     default:
-      return appendMarkdownMetadata(
-        `[${escapeMarkdownTitle(title)}](${escapeMarkdownUrl(url)})`,
-        metadata
-      );
+      return formatMarkdownLink(title, url, metadata);
   }
+}
+
+function formatMarkdownLink(title, url, metadata) {
+  const markdown = `[${escapeMarkdownTitle(title)}](${escapeMarkdownUrl(url)})`;
+  return appendMarkdownMetadata(markdown, metadata);
+}
+
+function formatMarkdownFrontmatterLink(title, url, metadata) {
+  const markdown = `[${escapeMarkdownTitle(title)}](${escapeMarkdownUrl(url)})`;
+
+  if (metadata.site === "zenn" || metadata.site === "qiita") {
+    return `${formatTechBlogFrontmatter(title, url, metadata)}\n${markdown}`;
+  }
+
+  return appendMarkdownMetadata(markdown, metadata);
 }
 
 function getPageMetadata(url) {
@@ -146,7 +161,9 @@ function getZennMetadata(url) {
       ...getMetaKeywords(),
       ...getJsonLdKeywords(),
       ...getArticleTagTexts()
-    ])
+    ]),
+    likes: getLikeCount(),
+    published: getPublishedDate()
   };
 }
 
@@ -158,7 +175,9 @@ function getQiitaMetadata(url) {
       ...getMetaKeywords(),
       ...getJsonLdKeywords(),
       ...getArticleTagTexts()
-    ])
+    ]),
+    likes: getLikeCount(),
+    published: getPublishedDate()
   };
 }
 
@@ -217,6 +236,49 @@ function appendMarkdownMetadata(markdown, metadata) {
   return lines.length ? `${markdown}\n${lines.join("\n")}` : markdown;
 }
 
+function formatTechBlogFrontmatter(title, url, metadata) {
+  const fields = [
+    ["title", title],
+    ["author", metadata.author ? `@${metadata.author.replace(/^@/, "")}` : ""],
+    ["tags", metadata.tags],
+    ["likes", metadata.likes],
+    ["published", metadata.published],
+    ["url", url]
+  ].filter(([, value]) => hasFrontmatterValue(value));
+
+  return [
+    "---",
+    ...fields.map(([key, value]) => `${key}: ${formatYamlValue(value)}`),
+    "---"
+  ].join("\n");
+}
+
+function hasFrontmatterValue(value) {
+  return Array.isArray(value) ? value.length > 0 : value !== "" && value !== null && value !== undefined;
+}
+
+function formatYamlValue(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => formatYamlScalar(item)).join(", ")}]`;
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return formatYamlScalar(value);
+}
+
+function formatYamlScalar(value) {
+  const text = String(value);
+
+  if (/^[A-Za-z0-9_@./:-]+$/.test(text)) {
+    return text;
+  }
+
+  return `"${text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
 function getMarkdownMetadataLines(metadata) {
   if (metadata.site === "zenn" || metadata.site === "qiita") {
     const parts = [
@@ -245,6 +307,113 @@ function getAuthorFromMeta() {
     || getMetaContent("article:author")
     || getMetaContent("twitter:creator")?.replace(/^@/, "")
     || "";
+}
+
+function getPublishedDate() {
+  return normalizeDate(
+    getMetaContent("article:published_time")
+      || getMetaContent("datePublished")
+      || getJsonLdValues("datePublished")[0]
+      || document.querySelector("time[datetime]")?.getAttribute("datetime")
+      || document.querySelector("[datetime]")?.getAttribute("datetime")
+      || ""
+  );
+}
+
+function normalizeDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  const text = String(value).trim();
+  const dateMatch = text.match(/\d{4}-\d{2}-\d{2}/);
+
+  if (dateMatch) {
+    return dateMatch[0];
+  }
+
+  const parsedDate = new Date(text);
+  return Number.isNaN(parsedDate.getTime()) ? text : parsedDate.toISOString().slice(0, 10);
+}
+
+function getLikeCount() {
+  return getLikeCountFromStructuredData()
+    ?? getLikeCountFromDom()
+    ?? "";
+}
+
+function getLikeCountFromStructuredData() {
+  const pageText = Array.from(document.scripts)
+    .map((script) => script.textContent)
+    .join("\n");
+  const patterns = [
+    /"likes_count"\s*:\s*(\d+)/i,
+    /"likesCount"\s*:\s*(\d+)/i,
+    /"liked_count"\s*:\s*(\d+)/i,
+    /"likedCount"\s*:\s*(\d+)/i,
+    /"likes"\s*:\s*(\d+)/i,
+    /"likeCount"\s*:\s*(\d+)/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = pageText.match(pattern);
+
+    if (match) {
+      return Number(match[1]);
+    }
+  }
+
+  return null;
+}
+
+function getLikeCountFromDom() {
+  const selectors = [
+    "[aria-label*='いいね']",
+    "[aria-label*='Like']",
+    "[aria-label*='like']",
+    "[title*='いいね']",
+    "[title*='Like']",
+    "[class*='like']",
+    "[class*='Like']"
+  ];
+
+  for (const element of document.querySelectorAll(selectors.join(","))) {
+    const count = parseCountFromText([
+      element.getAttribute("aria-label"),
+      element.getAttribute("title"),
+      element.textContent
+    ].filter(Boolean).join(" "));
+
+    if (count !== null) {
+      return count;
+    }
+  }
+
+  return null;
+}
+
+function parseCountFromText(text) {
+  const match = String(text).replace(/,/g, "").match(/(\d+(?:\.\d+)?)\s*([kK万])?/);
+
+  if (!match) {
+    return null;
+  }
+
+  const number = Number(match[1]);
+
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+
+  if (match[2]?.toLowerCase() === "k") {
+    return Math.round(number * 1000);
+  }
+
+  if (match[2] === "万") {
+    return Math.round(number * 10000);
+  }
+
+  return Math.round(number);
 }
 
 function getMetaKeywords() {
