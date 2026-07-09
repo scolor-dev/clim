@@ -450,13 +450,23 @@ function applyTrimmingRule(title, rule) {
 }
 
 function matchesRuleDomain(domain, url) {
-  if (!domain || domain === "*") {
-    return true;
-  }
-
   const hostname = new URL(url).hostname.replace(/^www\./, "");
-  const normalizedDomain = domain.replace(/^www\./, "").toLowerCase();
-  return hostname === normalizedDomain || hostname.endsWith(`.${normalizedDomain}`);
+
+  return splitRuleDomains(domain).some((ruleDomain) => {
+    if (ruleDomain === "*") {
+      return true;
+    }
+
+    const normalizedDomain = ruleDomain.replace(/^www\./, "").toLowerCase();
+    return hostname === normalizedDomain || hostname.endsWith(`.${normalizedDomain}`);
+  });
+}
+
+function splitRuleDomains(domain) {
+  return String(domain || "*")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function sanitizeRegexFlags(flags = "") {
