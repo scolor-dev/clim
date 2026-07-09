@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "clim",
   "description": "タイトルとURLを複数形式でコピー。設定: chrome://extensions/shortcuts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "action": {
     "default_title": "clim"
   },
@@ -13,7 +13,8 @@
   "permissions": [
     "activeTab",
     "clipboardWrite",
-    "scripting"
+    "scripting",
+    "contextMenus"
   ],
   "host_permissions": [
     "http://*/*",

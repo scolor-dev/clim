@@ -7,6 +7,35 @@ const COMMAND_FORMATS = {
   "copy-html-link": "html"
 };
 
+const CONTEXT_MENU_ROOT_ID = "clim-copy-root";
+
+const CONTEXT_MENU_ITEMS = [
+  {
+    id: "clim-copy-markdown",
+    title: "Markdown: [タイトル](URL)",
+    format: "markdown"
+  },
+  {
+    id: "clim-copy-scrapbox",
+    title: "Scrapbox: [タイトル URL]",
+    format: "scrapbox"
+  },
+  {
+    id: "clim-copy-plain-text",
+    title: "プレーンテキスト: タイトル URL",
+    format: "plainText"
+  },
+  {
+    id: "clim-copy-html",
+    title: "HTML: <a href=\"URL\">タイトル</a>",
+    format: "html"
+  }
+];
+
+chrome.runtime.onInstalled.addListener(() => {
+  createContextMenus();
+});
+
 chrome.commands.onCommand.addListener(async (command) => {
   const format = COMMAND_FORMATS[command];
 
@@ -25,8 +54,41 @@ chrome.commands.onCommand.addListener(async (command) => {
 
   // 実際のタイトル取得・URL取得・クリップボード書き込みはcontent.jsへ委譲します。
   // content scriptならページDOMへアクセスでき、トースト表示も自然に行えます。
+  await copyLinkFromTab(tab.id, format);
+});
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  const item = CONTEXT_MENU_ITEMS.find((menuItem) => menuItem.id === info.menuItemId);
+
+  if (!item || !tab?.id) {
+    return;
+  }
+
+  await copyLinkFromTab(tab.id, item.format);
+});
+
+function createContextMenus() {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: CONTEXT_MENU_ROOT_ID,
+      title: "climでクリーンコピー",
+      contexts: ["all"]
+    });
+
+    for (const item of CONTEXT_MENU_ITEMS) {
+      chrome.contextMenus.create({
+        id: item.id,
+        parentId: CONTEXT_MENU_ROOT_ID,
+        title: item.title,
+        contexts: ["all"]
+      });
+    }
+  });
+}
+
+async function copyLinkFromTab(tabId, format) {
   try {
-    const response = await sendCopyCommand(tab.id, format);
+    const response = await sendCopyCommand(tabId, format);
 
     if (!response?.ok) {
       console.warn("[clim] リンクのコピーに失敗しました。", response?.error);
@@ -35,7 +97,7 @@ chrome.commands.onCommand.addListener(async (command) => {
     // chrome:// や Chrome Web Store など、content scriptを実行できないページでは失敗します。
     console.warn("[clim] このページではリンクをコピーできませんでした。", error);
   }
-});
+}
 
 async function sendCopyCommand(tabId, format) {
   try {
