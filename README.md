@@ -50,6 +50,7 @@ Webページ上で右クリックすると、`climでクリーンコピー` メ�
 | コマンド | 出力例 | 初期ショートカット |
 | --- | --- | --- |
 | Markdown | `[タイトル](URL)` | Windows/Linux: `Alt + Shift + C`, Mac: `Control + Shift + C` |
+| Markdown + frontmatter | `--- ... ---` + `[タイトル](URL)` | 未割り当て |
 | Scrapbox | `[タイトル URL]` | 未割り当て |
 | プレーンテキスト | `タイトル URL` | 未割り当て |
 | HTML | `<a href="URL">タイトル</a>` | 未割り当て |
@@ -58,13 +59,21 @@ Webページ上で右クリックすると、`climでクリーンコピー` メ�
 
 Markdown形式では、主要テックサイトの情報を自動で補完します。
 
-- Zenn/Qiita: 著者名とタグをリンク直下に追加
+- 通常Markdown: Zenn/Qiitaの著者名とタグをリンク直下に追加
+- Markdown + frontmatter: Zenn/Qiitaのタイトル、著者名、タグ、いいね数、公開日、URLをfrontmatterとして先頭に追加
 - GitHubリポジトリ: タイトル末尾に主要言語とStar数を追加
 - GitHub Issue/PR: タイトル末尾に種別とOpen/Closed状態を追加
 
 ```md
+---
+title: "記事タイトル"
+author: @example
+tags: [Rust, React]
+likes: 120
+published: 2026-07-09
+url: https://zenn.dev/example/articles/example
+---
 [記事タイトル](https://zenn.dev/example/articles/example)
-@example #Rust #React
 ```
 
 ## 処理内容
