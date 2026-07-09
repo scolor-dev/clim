@@ -7,6 +7,63 @@ var CLIM_FORMAT_LABELS = {
   html: "HTML"
 };
 
+var CLIM_DEFAULT_TRIMMING_RULES = [
+  {
+    id: "global-leading-brackets",
+    enabled: true,
+    domain: "*",
+    type: "regex",
+    pattern: "^\\s*(?:【[^】]{1,40}】|\\[[^\\]]{1,40}\\])\\s*",
+    flags: "g",
+    description: "先頭の【公式】や[対談]などを削除"
+  },
+  {
+    id: "zenn-site-name",
+    enabled: true,
+    domain: "zenn.dev",
+    type: "regex",
+    pattern: "\\s*(?:\\||｜|-|ー|--|–|—|·)\\s*Zenn\\s*$",
+    flags: "i",
+    description: "Zennのサイト名を削除"
+  },
+  {
+    id: "qiita-site-name",
+    enabled: true,
+    domain: "qiita.com",
+    type: "regex",
+    pattern: "\\s*(?:\\||｜|-|ー|--|–|—|·)\\s*Qiita\\s*$",
+    flags: "i",
+    description: "Qiitaのサイト名を削除"
+  },
+  {
+    id: "github-site-name",
+    enabled: true,
+    domain: "github.com",
+    type: "regex",
+    pattern: "\\s*(?:\\||｜|-|ー|--|–|—|·)\\s*GitHub\\s*$",
+    flags: "i",
+    description: "GitHubのサイト名を削除"
+  },
+  {
+    id: "common-japanese-tech-sites",
+    enabled: true,
+    domain: "*",
+    type: "regex",
+    pattern: "\\s*(?:\\||｜|-|ー|--|–|—|·)\\s*(?:Note|note|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\\s*$",
+    flags: "i",
+    description: "よくある技術系サイト名を削除"
+  },
+  {
+    id: "leading-site-name",
+    enabled: true,
+    domain: "*",
+    type: "regex",
+    pattern: "^\\s*(?:Zenn|Qiita|Note|note|GitHub|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\\s*(?:\\||｜|-|ー|--|–|—|·)\\s*",
+    flags: "i",
+    description: "先頭にあるサイト名を削除"
+  }
+];
+
 if (!globalThis.__climContentScriptReady) {
   globalThis.__climContentScriptReady = true;
 
@@ -35,8 +92,9 @@ if (!globalThis.__climContentScriptReady) {
 }
 
 async function copyCurrentPageLink(format = "markdown") {
+  const trimmingRules = await getTrimmingRules();
   const pageMetadata = getPageMetadata(window.location.href);
-  const cleanTitle = enrichTitle(cleanJapaneseTitle(document.title), pageMetadata);
+  const cleanTitle = enrichTitle(cleanJapaneseTitle(document.title, window.location.href, trimmingRules), pageMetadata);
   const decodedUrl = decodeJapaneseUrl(window.location.href);
   const text = formatLink(format, cleanTitle, decodedUrl, pageMetadata);
 
@@ -346,16 +404,63 @@ function decodeJapaneseUrl(url) {
   }
 }
 
-function cleanJapaneseTitle(title) {
-  return toHalfWidthAlphaNumeric(title)
+async function getTrimmingRules() {
+  try {
+    const stored = await chrome.storage.sync.get({
+      trimmingRules: CLIM_DEFAULT_TRIMMING_RULES
+    });
+
+    return Array.isArray(stored.trimmingRules) ? stored.trimmingRules : CLIM_DEFAULT_TRIMMING_RULES;
+  } catch (_error) {
+    return CLIM_DEFAULT_TRIMMING_RULES;
+  }
+}
+
+function cleanJapaneseTitle(title, url, rules) {
+  const normalizedTitle = toHalfWidthAlphaNumeric(title)
     .replace(/\s+/g, " ")
-    // 先頭のメタ情報を除去: 【2026年最新】, [対談], 【公式】など。
-    .replace(/^\s*(?:【[^】]{1,40}】|\[[^\]]{1,40}\])\s*/g, "")
-    // 末尾のサイト名を除去: "記事タイトル | Zenn", "記事タイトル - Qiita"など。
-    .replace(/\s*(?:\||｜|-|ー|--|–|—|·)\s*(?:Zenn|Qiita|Note|note|GitHub|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\s*$/i, "")
-    // 先頭のサイト名を除去: "Qiita - 記事タイトル"など。
-    .replace(/^\s*(?:Zenn|Qiita|Note|note|GitHub|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\s*(?:\||｜|-|ー|--|–|—|·)\s*/i, "")
     .trim();
+
+  return applyTrimmingRules(normalizedTitle, url, rules);
+}
+
+function applyTrimmingRules(title, url, rules) {
+  return rules
+    .filter((rule) => rule?.enabled !== false && matchesRuleDomain(rule.domain, url))
+    .reduce((currentTitle, rule) => applyTrimmingRule(currentTitle, rule), title)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function applyTrimmingRule(title, rule) {
+  if (!rule?.pattern) {
+    return title;
+  }
+
+  if (rule.type === "regex") {
+    try {
+      return title.replace(new RegExp(rule.pattern, sanitizeRegexFlags(rule.flags)), "");
+    } catch (error) {
+      console.warn("[clim] 無効なトリミング正規表現をスキップしました。", rule, error);
+      return title;
+    }
+  }
+
+  return title.split(rule.pattern).join("");
+}
+
+function matchesRuleDomain(domain, url) {
+  if (!domain || domain === "*") {
+    return true;
+  }
+
+  const hostname = new URL(url).hostname.replace(/^www\./, "");
+  const normalizedDomain = domain.replace(/^www\./, "").toLowerCase();
+  return hostname === normalizedDomain || hostname.endsWith(`.${normalizedDomain}`);
+}
+
+function sanitizeRegexFlags(flags = "") {
+  return Array.from(new Set(String(flags).replace(/[^dgimsuvy]/g, "").split(""))).join("");
 }
 
 function toHalfWidthAlphaNumeric(text) {
