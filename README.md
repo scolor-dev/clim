@@ -51,9 +51,21 @@ Webページ上で右クリックすると、`climでクリーンコピー` メ�
 | --- | --- | --- |
 | Markdown | `[タイトル](URL)` | Windows/Linux: `Alt + Shift + C`, Mac: `Control + Shift + C` |
 | Markdown + frontmatter | `--- ... ---` + `[タイトル](URL)` | 未割り当て |
+| Markdown + quote | `> 選択テキスト` + `[タイトル](URL)` | 未割り当て |
 | Scrapbox | `[タイトル URL]` | 未割り当て |
 | プレーンテキスト | `タイトル URL` | 未割り当て |
 | HTML | `<a href="URL">タイトル</a>` | 未割り当て |
+
+## 選択テキスト引用
+
+`Markdown + quote` では、ページ上で選択しているテキストをMarkdown引用として先頭に追加できます。
+ショートカットは未割り当てなので、Chromeで `chrome://extensions/shortcuts` を開いて好きなキーを割り当ててください。
+
+```md
+> 選択した記事の中の重要な文章
+
+[クリーンなタイトル](デコード済みのURL)
+```
 
 ## メタデータ補完
 

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "clim",
   "description": "タイトルとURLを複数形式でコピー。設定: chrome://extensions/shortcuts",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "action": {
     "default_title": "clim"
   },
@@ -34,6 +34,9 @@
     },
     "copy-markdown-frontmatter-link": {
       "description": "現在のページをfrontmatter付きMarkdownとしてコピー"
+    },
+    "copy-markdown-quote-link": {
+      "description": "選択テキストを引用してMarkdownリンクとしてコピー"
     },
     "copy-scrapbox-link": {
       "description": "現在のページをScrapboxリンクとしてコピー"

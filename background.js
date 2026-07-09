@@ -3,6 +3,7 @@
 const COMMAND_FORMATS = {
   "copy-markdown-link": "markdown",
   "copy-markdown-frontmatter-link": "markdownFrontmatter",
+  "copy-markdown-quote-link": "markdownQuote",
   "copy-scrapbox-link": "scrapbox",
   "copy-plain-text-link": "plainText",
   "copy-html-link": "html"
@@ -21,6 +22,11 @@ const CONTEXT_MENU_ITEMS = [
     id: "clim-copy-markdown-frontmatter",
     title: "Markdown + frontmatter",
     format: "markdownFrontmatter"
+  },
+  {
+    id: "clim-copy-markdown-quote",
+    title: "Markdown + quote",
+    format: "markdownQuote"
   },
   {
     id: "clim-copy-scrapbox",
