@@ -8,6 +8,7 @@ const COMMAND_FORMATS = {
 };
 
 const CONTEXT_MENU_ROOT_ID = "clim-copy-root";
+const CONTEXT_MENU_OPTIONS_ID = "clim-open-options";
 
 const CONTEXT_MENU_ITEMS = [
   {
@@ -36,6 +37,10 @@ chrome.runtime.onInstalled.addListener(() => {
   createContextMenus();
 });
 
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage();
+});
+
 chrome.commands.onCommand.addListener(async (command) => {
   const format = COMMAND_FORMATS[command];
 
@@ -58,6 +63,11 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === CONTEXT_MENU_OPTIONS_ID) {
+    chrome.runtime.openOptionsPage();
+    return;
+  }
+
   const item = CONTEXT_MENU_ITEMS.find((menuItem) => menuItem.id === info.menuItemId);
 
   if (!item || !tab?.id) {
@@ -83,6 +93,13 @@ function createContextMenus() {
         contexts: ["all"]
       });
     }
+
+    chrome.contextMenus.create({
+      id: CONTEXT_MENU_OPTIONS_ID,
+      parentId: CONTEXT_MENU_ROOT_ID,
+      title: "トリミング設定を開く",
+      contexts: ["all"]
+    });
   });
 }
 
