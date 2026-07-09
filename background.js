@@ -11,6 +11,15 @@ const COMMAND_FORMATS = {
 
 const CONTEXT_MENU_ROOT_ID = "clim-copy-root";
 const CONTEXT_MENU_OPTIONS_ID = "clim-open-options";
+const CONTEXT_MENU_CONTEXTS = [
+  "page",
+  "selection",
+  "link",
+  "image",
+  "video",
+  "audio",
+  "editable"
+];
 
 const CONTEXT_MENU_ITEMS = [
   {
@@ -46,6 +55,10 @@ const CONTEXT_MENU_ITEMS = [
 ];
 
 chrome.runtime.onInstalled.addListener(() => {
+  createContextMenus();
+});
+
+chrome.runtime.onStartup.addListener(() => {
   createContextMenus();
 });
 
@@ -94,7 +107,7 @@ function createContextMenus() {
     chrome.contextMenus.create({
       id: CONTEXT_MENU_ROOT_ID,
       title: "climでクリーンコピー",
-      contexts: ["all"]
+      contexts: CONTEXT_MENU_CONTEXTS
     });
 
     for (const item of CONTEXT_MENU_ITEMS) {
@@ -102,7 +115,7 @@ function createContextMenus() {
         id: item.id,
         parentId: CONTEXT_MENU_ROOT_ID,
         title: item.title,
-        contexts: ["all"]
+        contexts: CONTEXT_MENU_CONTEXTS
       });
     }
 
@@ -110,7 +123,7 @@ function createContextMenus() {
       id: CONTEXT_MENU_OPTIONS_ID,
       parentId: CONTEXT_MENU_ROOT_ID,
       title: "トリミング設定を開く",
-      contexts: ["all"]
+      contexts: CONTEXT_MENU_CONTEXTS
     });
   });
 }
@@ -138,7 +151,7 @@ async function sendCopyCommand(tabId, format) {
     // 拡張機能を読み込む前から開いていたタブではcontent scriptが未注入のことがあります。
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["content.js"]
+      files: ["shared-config.js", "content.js"]
     });
 
     return chrome.tabs.sendMessage(tabId, {
