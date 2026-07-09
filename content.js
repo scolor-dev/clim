@@ -39,7 +39,8 @@ if (!globalThis.__climContentScriptReady) {
 async function copyCurrentPageLink(format = "markdown") {
   const trimmingRules = await getTrimmingRules();
   const pageMetadata = getPageMetadata(window.location.href);
-  const cleanTitle = enrichTitle(cleanJapaneseTitle(document.title, window.location.href, trimmingRules), pageMetadata);
+  const baseTitle = getBestPageTitle(document.title, window.location.href, trimmingRules, pageMetadata);
+  const cleanTitle = enrichTitle(baseTitle, pageMetadata);
   const decodedUrl = decodeJapaneseUrl(window.location.href);
   const text = formatLink(format, cleanTitle, decodedUrl, pageMetadata);
 
@@ -171,11 +172,21 @@ function getGitHubMetadata(url) {
   if (pathParts.length >= 4 && (pathParts[2] === "issues" || pathParts[2] === "pull")) {
     metadata.kind = pathParts[2] === "pull" ? "PR" : "Issue";
     metadata.number = pathParts[3];
+    metadata.title = getGitHubIssueOrPullTitle() || cleanGitHubTitle(document.title);
   } else if (pathParts.length === 2) {
     metadata.kind = "Repository";
+    metadata.title = getGitHubRepositoryTitle(metadata);
   }
 
   return metadata;
+}
+
+function getBestPageTitle(defaultTitle, url, trimmingRules, metadata) {
+  if (metadata.site === "github" && metadata.title) {
+    return cleanJapaneseTitle(metadata.title, url, trimmingRules);
+  }
+
+  return cleanJapaneseTitle(defaultTitle, url, trimmingRules);
 }
 
 function enrichTitle(title, metadata) {
@@ -183,7 +194,7 @@ function enrichTitle(title, metadata) {
     return title;
   }
 
-  const githubTitle = cleanGitHubTitle(title);
+  const githubTitle = cleanGitHubTitle(metadata.title || title);
 
   if (metadata.kind === "Repository") {
     const details = [metadata.language, formatGitHubStars(metadata.stars)].filter(Boolean);
@@ -205,6 +216,34 @@ function cleanGitHubTitle(title) {
     .replace(/\s*·\s*GitHub\s*$/i, "")
     .replace(/\s*-\s*GitHub\s*$/i, "")
     .trim();
+}
+
+function getGitHubRepositoryTitle(metadata) {
+  if (!metadata.owner || !metadata.repo) {
+    return "";
+  }
+
+  return `${metadata.owner}/${metadata.repo}`;
+}
+
+function getGitHubIssueOrPullTitle() {
+  const selectors = [
+    "bdi.js-issue-title",
+    ".js-issue-title",
+    "[data-testid='issue-title']",
+    "span.js-issue-title",
+    "h1 bdi"
+  ];
+
+  for (const selector of selectors) {
+    const title = document.querySelector(selector)?.textContent.trim();
+
+    if (title) {
+      return title;
+    }
+  }
+
+  return "";
 }
 
 function appendMarkdownMetadata(markdown, metadata) {
