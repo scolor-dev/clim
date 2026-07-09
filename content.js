@@ -3,6 +3,7 @@
 var CLIM_FORMAT_LABELS = {
   markdown: "Markdown",
   markdownFrontmatter: "Markdown + frontmatter",
+  markdownQuote: "Markdown + quote",
   scrapbox: "Scrapbox",
   plainText: "プレーンテキスト",
   html: "HTML"
@@ -113,6 +114,8 @@ function formatLink(format, title, url, metadata) {
       return `<a href="${escapeHtmlAttribute(url)}">${escapeHtmlText(title)}</a>`;
     case "markdownFrontmatter":
       return formatMarkdownFrontmatterLink(title, url, metadata);
+    case "markdownQuote":
+      return formatMarkdownQuoteLink(title, url, metadata);
     case "markdown":
     default:
       return formatMarkdownLink(title, url, metadata);
@@ -132,6 +135,36 @@ function formatMarkdownFrontmatterLink(title, url, metadata) {
   }
 
   return appendMarkdownMetadata(markdown, metadata);
+}
+
+function formatMarkdownQuoteLink(title, url, metadata) {
+  const markdown = formatMarkdownLink(title, url, metadata);
+  const quote = formatSelectedTextQuote();
+
+  return quote ? `${quote}\n\n${markdown}` : markdown;
+}
+
+function formatSelectedTextQuote() {
+  const selectedText = cleanSelectedText(window.getSelection()?.toString() || "");
+
+  if (!selectedText) {
+    return "";
+  }
+
+  return selectedText
+    .split("\n")
+    .map((line) => `> ${line}`)
+    .join("\n");
+}
+
+function cleanSelectedText(text) {
+  return toHalfWidthAlphaNumeric(text)
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
 }
 
 function getPageMetadata(url) {
