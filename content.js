@@ -35,15 +35,16 @@ if (!globalThis.__climContentScriptReady) {
 }
 
 async function copyCurrentPageLink(format = "markdown") {
-  const cleanTitle = cleanJapaneseTitle(document.title);
+  const pageMetadata = getPageMetadata(window.location.href);
+  const cleanTitle = enrichTitle(cleanJapaneseTitle(document.title), pageMetadata);
   const decodedUrl = decodeJapaneseUrl(window.location.href);
-  const text = formatLink(format, cleanTitle, decodedUrl);
+  const text = formatLink(format, cleanTitle, decodedUrl, pageMetadata);
 
   await writeToClipboard(text);
   return text;
 }
 
-function formatLink(format, title, url) {
+function formatLink(format, title, url, metadata) {
   switch (format) {
     case "scrapbox":
       return `[${title} ${url}]`;
@@ -53,8 +54,272 @@ function formatLink(format, title, url) {
       return `<a href="${escapeHtmlAttribute(url)}">${escapeHtmlText(title)}</a>`;
     case "markdown":
     default:
-      return `[${escapeMarkdownTitle(title)}](${escapeMarkdownUrl(url)})`;
+      return appendMarkdownMetadata(
+        `[${escapeMarkdownTitle(title)}](${escapeMarkdownUrl(url)})`,
+        metadata
+      );
   }
+}
+
+function getPageMetadata(url) {
+  const parsedUrl = new URL(url);
+  const hostname = parsedUrl.hostname.replace(/^www\./, "");
+
+  if (hostname === "zenn.dev") {
+    return getZennMetadata(parsedUrl);
+  }
+
+  if (hostname === "qiita.com") {
+    return getQiitaMetadata(parsedUrl);
+  }
+
+  if (hostname === "github.com") {
+    return getGitHubMetadata(parsedUrl);
+  }
+
+  return { site: "generic" };
+}
+
+function getZennMetadata(url) {
+  return {
+    site: "zenn",
+    author: getZennAuthor(url),
+    tags: uniqueList([
+      ...getMetaKeywords(),
+      ...getJsonLdKeywords(),
+      ...getArticleTagTexts()
+    ])
+  };
+}
+
+function getQiitaMetadata(url) {
+  return {
+    site: "qiita",
+    author: getQiitaAuthor(url),
+    tags: uniqueList([
+      ...getMetaKeywords(),
+      ...getJsonLdKeywords(),
+      ...getArticleTagTexts()
+    ])
+  };
+}
+
+function getGitHubMetadata(url) {
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  const metadata = {
+    site: "github",
+    owner: pathParts[0],
+    repo: pathParts[1],
+    language: getGitHubPrimaryLanguage(),
+    stars: getGitHubStars(),
+    state: getGitHubIssueOrPullState()
+  };
+
+  if (pathParts.length >= 4 && (pathParts[2] === "issues" || pathParts[2] === "pull")) {
+    metadata.kind = pathParts[2] === "pull" ? "PR" : "Issue";
+    metadata.number = pathParts[3];
+  } else if (pathParts.length === 2) {
+    metadata.kind = "Repository";
+  }
+
+  return metadata;
+}
+
+function enrichTitle(title, metadata) {
+  if (metadata.site !== "github") {
+    return title;
+  }
+
+  const githubTitle = cleanGitHubTitle(title);
+
+  if (metadata.kind === "Repository") {
+    const details = [metadata.language, formatGitHubStars(metadata.stars)].filter(Boolean);
+    return details.length ? `${githubTitle} (${details.join(", ")})` : githubTitle;
+  }
+
+  if (metadata.kind === "Issue" || metadata.kind === "PR") {
+    const details = [metadata.kind, metadata.state].filter(Boolean);
+    return details.length ? `${githubTitle} (${details.join(" ")})` : githubTitle;
+  }
+
+  return githubTitle;
+}
+
+function cleanGitHubTitle(title) {
+  return title
+    .replace(/^\s*GitHub\s*(?:-|:)\s*/i, "")
+    .replace(/\s*·\s*(?:Issue|Pull Request)\s*#\d+\s*·\s*[^·]+$/i, "")
+    .replace(/\s*·\s*GitHub\s*$/i, "")
+    .replace(/\s*-\s*GitHub\s*$/i, "")
+    .trim();
+}
+
+function appendMarkdownMetadata(markdown, metadata) {
+  const lines = getMarkdownMetadataLines(metadata);
+  return lines.length ? `${markdown}\n${lines.join("\n")}` : markdown;
+}
+
+function getMarkdownMetadataLines(metadata) {
+  if (metadata.site === "zenn" || metadata.site === "qiita") {
+    const parts = [
+      metadata.author ? `@${metadata.author.replace(/^@/, "")}` : "",
+      ...metadata.tags.map((tag) => `#${normalizeTag(tag)}`)
+    ].filter(Boolean);
+
+    return parts.length ? [parts.join(" ")] : [];
+  }
+
+  return [];
+}
+
+function getZennAuthor(url) {
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  return pathParts[0] || getAuthorFromMeta();
+}
+
+function getQiitaAuthor(url) {
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  return pathParts[0] || getAuthorFromMeta();
+}
+
+function getAuthorFromMeta() {
+  return getMetaContent("author")
+    || getMetaContent("article:author")
+    || getMetaContent("twitter:creator")?.replace(/^@/, "")
+    || "";
+}
+
+function getMetaKeywords() {
+  return getMetaContent("keywords")
+    .split(",")
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
+}
+
+function getJsonLdKeywords() {
+  return getJsonLdValues("keywords").flatMap((keywords) => {
+    if (Array.isArray(keywords)) {
+      return keywords;
+    }
+
+    return String(keywords)
+      .split(",")
+      .map((keyword) => keyword.trim())
+      .filter(Boolean);
+  });
+}
+
+function getJsonLdValues(key) {
+  return Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+    .flatMap((script) => {
+      try {
+        return collectJsonValues(JSON.parse(script.textContent), key);
+      } catch (_error) {
+        return [];
+      }
+    });
+}
+
+function collectJsonValues(value, key) {
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectJsonValues(item, key));
+  }
+
+  return Object.entries(value).flatMap(([entryKey, entryValue]) => {
+    const ownValues = entryKey === key ? [entryValue] : [];
+    return [...ownValues, ...collectJsonValues(entryValue, key)];
+  });
+}
+
+function getArticleTagTexts() {
+  const selectors = [
+    'a[href*="/topics/"]',
+    'a[href*="/tags/"]',
+    'a[href*="/tag/"]',
+    '[class*="tag"] a',
+    '[class*="Tag"] a'
+  ];
+
+  return Array.from(document.querySelectorAll(selectors.join(",")))
+    .map((element) => element.textContent.trim().replace(/^#/, ""))
+    .filter((text) => text && text.length <= 40);
+}
+
+function getGitHubPrimaryLanguage() {
+  return document.querySelector("[itemprop='programmingLanguage']")?.textContent.trim()
+    || getMetaContent("octolytics-dimension-repository_language")
+    || "";
+}
+
+function getGitHubStars() {
+  const ariaLabel = document.querySelector("a[href$='/stargazers']")?.getAttribute("aria-label") || "";
+  const ariaMatch = ariaLabel.match(/([\d,.]+)\s+users?\s+starred/i);
+
+  if (ariaMatch) {
+    return ariaMatch[1];
+  }
+
+  return document.querySelector("a[href$='/stargazers'] .Counter")?.textContent.trim() || "";
+}
+
+function getGitHubIssueOrPullState() {
+  const stateText = document.querySelector(".State")?.textContent.trim()
+    || document.querySelector("[data-testid='issue-state-badge']")?.textContent.trim()
+    || "";
+
+  if (/closed|merged/i.test(stateText)) {
+    return "Closed";
+  }
+
+  if (/open/i.test(stateText)) {
+    return "Open";
+  }
+
+  return "";
+}
+
+function getMetaContent(name) {
+  const escapedName = cssEscape(name);
+  return document.querySelector(`meta[name="${escapedName}"]`)?.content?.trim()
+    || document.querySelector(`meta[property="${escapedName}"]`)?.content?.trim()
+    || "";
+}
+
+function uniqueList(items) {
+  const seen = new Set();
+
+  return items
+    .map((item) => normalizeTag(item))
+    .filter((item) => {
+      const key = item.toLowerCase();
+
+      if (!item || seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+      return true;
+    });
+}
+
+function normalizeTag(tag) {
+  return toHalfWidthAlphaNumeric(tag)
+    .replace(/^#/, "")
+    .replace(/\s+/g, "-")
+    .replace(/[()[\]{}]/g, "")
+    .trim();
+}
+
+function formatGitHubStars(stars) {
+  return stars ? `★${stars}` : "";
+}
+
+function cssEscape(value) {
+  return value.replace(/["\\]/g, "\\$&");
 }
 
 function escapeHtmlText(text) {
@@ -87,9 +352,9 @@ function cleanJapaneseTitle(title) {
     // 先頭のメタ情報を除去: 【2026年最新】, [対談], 【公式】など。
     .replace(/^\s*(?:【[^】]{1,40}】|\[[^\]]{1,40}\])\s*/g, "")
     // 末尾のサイト名を除去: "記事タイトル | Zenn", "記事タイトル - Qiita"など。
-    .replace(/\s*(?:\||｜|-|ー|--|–|—)\s*(?:Zenn|Qiita|Note|note|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\s*$/i, "")
+    .replace(/\s*(?:\||｜|-|ー|--|–|—|·)\s*(?:Zenn|Qiita|Note|note|GitHub|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\s*$/i, "")
     // 先頭のサイト名を除去: "Qiita - 記事タイトル"など。
-    .replace(/^\s*(?:Zenn|Qiita|Note|note|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\s*(?:\||｜|-|ー|--|–|—)\s*/i, "")
+    .replace(/^\s*(?:Zenn|Qiita|Note|note|GitHub|クラスメソッド|DevelopersIO|はてなブログ|Hatena Blog|Speaker Deck|connpass|TECH PLAY)\s*(?:\||｜|-|ー|--|–|—|·)\s*/i, "")
     .trim();
 }
 

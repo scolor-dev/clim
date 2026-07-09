@@ -42,6 +42,19 @@ Webページ上で右クリックすると、`climでクリーンコピー` メ�
 | プレーンテキスト | `タイトル URL` | 未割り当て |
 | HTML | `<a href="URL">タイトル</a>` | 未割り当て |
 
+## メタデータ補完
+
+Markdown形式では、主要テックサイトの情報を自動で補完します。
+
+- Zenn/Qiita: 著者名とタグをリンク直下に追加
+- GitHubリポジトリ: タイトル末尾に主要言語とStar数を追加
+- GitHub Issue/PR: タイトル末尾に種別とOpen/Closed状態を追加
+
+```md
+[記事タイトル](https://zenn.dev/example/articles/example)
+@example #Rust #React
+```
+
 ## 処理内容
 
 - 日本語URLエンコードを `decodeURIComponent()` でデコード
