@@ -11,15 +11,7 @@ const COMMAND_FORMATS = {
 
 const CONTEXT_MENU_ROOT_ID = "clim-copy-root";
 const CONTEXT_MENU_OPTIONS_ID = "clim-open-options";
-const CONTEXT_MENU_CONTEXTS = [
-  "page",
-  "selection",
-  "link",
-  "image",
-  "video",
-  "audio",
-  "editable"
-];
+const CONTEXT_MENU_CONTEXTS = ["all"];
 
 const CONTEXT_MENU_ITEMS = [
   {
@@ -61,6 +53,9 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onStartup.addListener(() => {
   createContextMenus();
 });
+
+// 開発中の拡張機能リロードやService Worker再起動後も、右クリックメニューを確実に復元します。
+createContextMenus();
 
 chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage();
