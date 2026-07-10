@@ -14,7 +14,7 @@
         </div>
         <p class="eyebrow">clean link maker</p>
         <h1 id="pageTitle">Clim</h1>
-        <p class="lead">現在のページURLを、ショートカットや右クリックからそのままコピーできる小さな土台です。</p>
+        <p class="lead">ショートカットや右クリックから、テンプレートで整形したページ情報をすばやくコピーできます。</p>
         <nav class="actions" aria-label="Clim pages">
           <button id="openSettings" type="button">設定を開く</button>
           <button id="openShortcuts" type="button" class="secondary">ショートカット</button>
@@ -26,14 +26,14 @@
           <span class="mark"></span>
           <div>
             <h2>URLコピー</h2>
-            <p>内部処理は空に近く、現在のページURLを加工せずそのままコピーします。</p>
+            <p>初期テンプレートは {{url}}。現在のページURLを加工せずそのままコピーします。</p>
           </div>
         </article>
         <article>
           <span class="mark"></span>
           <div>
             <h2>ショートカット</h2>
-            <p>Alt + Shift + C、MacではControl + Shift + Cでコピーできます。</p>
+            <p>スロット1はAlt + Shift + C、MacではControl + Shift + C。スロット2〜4はChrome側で割り当てできます。</p>
           </div>
         </article>
         <article>
@@ -43,6 +43,26 @@
             <p>Webページ上の右クリックメニューからClimでURLをコピーできます。</p>
           </div>
         </article>
+        <article>
+          <span class="mark"></span>
+          <div>
+            <h2>テンプレート</h2>
+            <p>{{title}} や {{selectedText}}、if条件、文字連結でコピー形式を作れます。</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="guide" aria-labelledby="templateGuideTitle">
+        <div>
+          <p class="eyebrow">template guide</p>
+          <h2 id="templateGuideTitle">テンプレートの書き方</h2>
+          <p>設定ページのテンプレート画面から、ショートカットスロットごとにコピー形式を割り当てできます。</p>
+        </div>
+        <div class="examples">
+          <code>[{{title}}]({{url}})</code>
+          <code>{{title + " - " + url}}</code>
+          <code>{{if selectedText then "&gt; " + selectedText + "\n\n" else ""}}[{{title}}]({{url}})</code>
+        </div>
       </section>
     </main>
     <script src="home.js"></script>

@@ -1,18 +1,19 @@
 # Clim
 
-Clim は、日本語Webページ向けのクリーンなリンク生成ツールを育てるための Chrome 拡張機能です。
+Clim は、現在開いているWebページの情報をショートカットや右クリックから素早くコピーする Chrome 拡張機能です。
 
-現在は内部処理を最小にし、現在のページURLをそのままコピーする構成にしています。
+URLだけをコピーするシンプルな使い方から、Markdownリンク、引用つきメモ、Frontmatter風のメモまで、テンプレートで出力を自由に作れます。
 
-## 現在の構成
+## 主な機能
 
-- 3択ポップアップ
-- ホームページ
-- 設定ページ
-- ホームページとポップアップからショートカット設定への導線
-- ショートカットで現在のページURLをコピー
-- Webページ上の右クリックメニューで現在のページURLをコピー
-- コピー処理はURLを加工せず、そのままクリップボードへ保存
+- ショートカットスロット1〜4からコピー
+- ページ右クリックメニューからURLコピー
+- Chromeに保存されているショートカット割り当てを設定画面で表示
+- コピー完了トーストのON/OFF
+- テンプレートの追加・編集・削除
+- 初期テンプレート `URLコピー` は削除不可・編集不可
+- `{{url}}` や `{{title}}` などのページ情報をテンプレートへ差し込み
+- `if` 条件分岐、文字列、`+` 連結に対応
 
 ## インストール
 
@@ -25,34 +26,147 @@ Clim は、日本語Webページ向けのクリーンなリンク生成ツール
 
 Chrome の拡張機能アイコンから Clim をクリックすると、ポップアップが表示されます。
 
-ポップアップとホームページから以下を開けます。
+ポップアップから以下を開けます。
 
 - ホームページ
 - 設定
 - ショートカット
 
-現在のページURLは、次の操作でコピーできます。
+コピー操作は次の方法で行えます。
 
-- ショートカット: `Alt + Shift + C`
-- Mac: `Control + Shift + C`
+- ショートカットスロット1: `Alt + Shift + C`
+- Macのスロット1: `Control + Shift + C`
+- スロット2〜4: `chrome://extensions/shortcuts` で任意に割り当て
 - Webページ上で右クリック: `ClimでURLをコピー`
+
+## 設定
+
+設定ページには `設定` と `テンプレート` の2つの画面があります。
+
+`設定` では、現在Chromeに保存されているショートカット割り当てを確認できます。ショートカット表示のボタンを押すと、Chrome標準のショートカット設定画面を開きます。
+
+コピー完了トーストはON/OFFを切り替えできます。頻繁に使う場合はOFFにすると、画面上の通知を抑えられます。
+
+## テンプレート
+
+`テンプレート` ではコピー内容を作成できます。
+
+初期テンプレート:
+
+```txt
+URLコピー
+{{url}}
+```
+
+この初期テンプレートは削除不可・編集不可です。追加したテンプレートは編集・削除できます。
+
+テンプレートはショートカットスロット1〜4へ割り当てできます。例えばスロット1はURLコピー、スロット2はMarkdownリンク、スロット3は引用つきメモのように使い分けできます。
+
+## テンプレートで使える値
+
+基本セット:
+
+- `{{url}}`: 現在のURL
+- `{{title}}`: `document.title`
+- `{{canonicalUrl}}`: canonical URL
+- `{{description}}`: meta description
+- `{{siteName}}`: OGPのサイト名
+- `{{ogTitle}}`: OGPタイトル
+- `{{ogDescription}}`: OGP説明文
+- `{{ogImage}}`: OGP画像URL
+- `{{publishedTime}}`: 記事の公開日時
+- `{{modifiedTime}}`: 記事の更新日時
+- `{{author}}`: author meta
+- `{{lang}}`: ページ言語
+- `{{selectedText}}`: 選択中のテキスト
+- `{{domain}}`: ドメイン
+- `{{date}}`: コピー日
+- `{{datetime}}`: コピー日時
+
+文字列は `"` で囲みます。
+
+```txt
+{{"メモ: "}}
+```
+
+`+` で連結できます。
+
+```txt
+{{title + " - " + url}}
+```
+
+`if ... then ... else ...` で条件分岐できます。
+
+```txt
+{{if selectedText then "> " + selectedText + "\n\n" else ""}}[{{title}}]({{url}})
+```
+
+## テンプレート例
+
+Markdownリンク:
+
+```txt
+[{{title}}]({{url}})
+```
+
+タイトルとURL:
+
+```txt
+{{title + " " + url}}
+```
+
+引用つきMarkdownリンク:
+
+```txt
+{{if selectedText then "> " + selectedText + "\n\n" else ""}}[{{title}}]({{url}})
+```
+
+メモ用:
+
+```txt
+---
+title: {{title}}
+url: {{url}}
+site: {{siteName}}
+author: {{author}}
+date: {{date}}
+---
+
+{{description}}
+```
+
+## Chromeウェブストア向け説明
+
+Clim は、現在開いているWebページのURLやタイトル、メタ情報をショートカットや右クリックから素早くコピーするためのChrome拡張機能です。
+
+4つのショートカットスロットを用意しており、Chrome標準のショートカット設定から自由にキーを割り当てできます。コピー内容はテンプレートでカスタマイズでき、URLコピー、Markdownリンク、引用つきメモ、Frontmatter風のメモなど、普段使っているノートアプリやドキュメントに合わせた形式を作成できます。
+
+コピー処理はページ上で完結し、外部サーバーへの送信やリモートコードの実行は行いません。頻繁に使う人向けに、コピー完了トーストのON/OFFも設定できます。
+
+おすすめカテゴリ: 仕事効率化
+
+## 権限について
+
+- `activeTab`: 現在アクティブなタブでコピー処理を実行するため
+- `clipboardWrite`: 生成したテキストをクリップボードへ保存するため
+- `contextMenus`: 右クリックメニューにコピー項目を追加するため
+- `scripting`: 必要なページへコピー用のcontent scriptを注入するため
+- `storage`: テンプレート、スロット割り当て、トースト設定を保存するため
 
 ## 配布
 
 ZIPで配布する場合は、拡張機能に必要なファイルだけを固めます。
 
 ```bash
-zip dist/clim-v1.1.0.zip manifest.json README.md icons/icon-16.png icons/icon-32.png icons/icon-48.png icons/icon-128.png icons/icon-source.svg src/background/background.js src/content/content.js src/popup/popup.html src/popup/popup.css src/popup/popup.js src/home/home.html src/home/home.css src/home/home.js src/settings/settings.html src/settings/settings.css
+zip dist/clim-v1.1.0.zip manifest.json README.md icons/icon-16.png icons/icon-32.png icons/icon-48.png icons/icon-128.png icons/icon-source.svg src/background/background.js src/content/content.js src/popup/popup.html src/popup/popup.css src/popup/popup.js src/home/home.html src/home/home.css src/home/home.js src/settings/settings.html src/settings/settings.css src/settings/settings.js
 ```
 
 ## ファイル構成
 
 - `manifest.json`: 拡張機能の設定
 - `src/background/background.js`: ショートカットと右クリックメニュー
-- `src/content/content.js`: 現在URLのコピー処理
+- `src/content/content.js`: テンプレート評価とクリップボード書き込み
 - `src/popup/`: アイコンから開く3択ポップアップ
-- `src/home/home.html`: ホームページ
-- `src/home/home.css`: ホームページのスタイル
-- `src/home/home.js`: ホームページから設定とショートカットを開く処理
-- `src/settings/`: 設定ページ
+- `src/home/`: ホームページ
+- `src/settings/`: 設定ページとテンプレート管理
 - `icons/`: Chrome拡張機能用アイコン

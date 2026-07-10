@@ -15,9 +15,84 @@
         <div>
           <p class="eyebrow">settings</p>
           <h1>Clim 設定</h1>
-          <p class="lead">現在はURLをそのままコピーする最小構成です。設定項目は、整形機能を戻すタイミングで追加します。</p>
+          <p class="lead">現在はURLをそのままコピーする最小構成です。4つのショートカットスロットを用意しています。</p>
         </div>
       </header>
+
+      <nav class="settingsNav" aria-label="設定カテゴリ">
+        <button class="navButton isActive" type="button" data-tab-button="settingsPanel">設定</button>
+        <button class="navButton" type="button" data-tab-button="templatesPanel">テンプレート</button>
+      </nav>
+
+      <section class="panel" id="settingsPanel" aria-labelledby="settingsTitle" data-tab-panel>
+        <div>
+          <p class="eyebrow">settings</p>
+          <h2 id="settingsTitle">設定</h2>
+        </div>
+
+        <div class="settingRow">
+          <div>
+            <h3>コピー完了トースト</h3>
+            <p>コピー後に画面右下へ小さく通知します。</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toastEnabled">
+            <span>ON</span>
+          </label>
+        </div>
+
+        <div class="slotList">
+          <article data-command-name="copy-slot-1">
+            <h3>スロット1</h3>
+            <button class="shortcutButton" type="button" data-shortcut-button>読み込み中</button>
+            <p data-shortcut-note>初期値: Alt + Shift + C / MacではControl + Shift + C</p>
+          </article>
+          <article data-command-name="copy-slot-2">
+            <h3>スロット2</h3>
+            <button class="shortcutButton" type="button" data-shortcut-button>読み込み中</button>
+            <p data-shortcut-note>初期割り当てなし。Chromeのショートカット設定で変更できます。</p>
+          </article>
+          <article data-command-name="copy-slot-3">
+            <h3>スロット3</h3>
+            <button class="shortcutButton" type="button" data-shortcut-button>読み込み中</button>
+            <p data-shortcut-note>初期割り当てなし。Chromeのショートカット設定で変更できます。</p>
+          </article>
+          <article data-command-name="copy-slot-4">
+            <h3>スロット4</h3>
+            <button class="shortcutButton" type="button" data-shortcut-button>読み込み中</button>
+            <p data-shortcut-note>初期割り当てなし。Chromeのショートカット設定で変更できます。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="templatesPanel" aria-labelledby="templatesTitle" data-tab-panel hidden>
+        <div class="panelHeader">
+          <div>
+            <p class="eyebrow">templates</p>
+            <h2 id="templatesTitle">テンプレート</h2>
+          </div>
+          <button class="addTemplateButton" type="button" id="addTemplate">テンプレート追加</button>
+        </div>
+
+        <form class="templateForm" id="templateForm" hidden>
+          <label>
+            <span>テンプレート名</span>
+            <input type="text" id="templateName" maxlength="40" required>
+          </label>
+          <label>
+            <span>本文</span>
+            <textarea id="templateBody" rows="6" required></textarea>
+          </label>
+          <p class="templateHelp">利用可能: {{url}}, {{title}}, {{canonicalUrl}}, {{description}}, {{siteName}}, {{author}}, {{selectedText}}, {{domain}}, {{date}}, {{datetime}}。文字列は "..."、連結は +、条件は {{if selectedText then "> " + selectedText else ""}} の形で使えます。</p>
+          <div class="templateFormActions">
+            <button type="submit">保存</button>
+            <button type="button" class="secondaryButton" id="cancelTemplate">キャンセル</button>
+          </div>
+        </form>
+
+        <div id="templateList"></div>
+      </section>
     </main>
+    <script src="settings.js"></script>
   </body>
 </html>

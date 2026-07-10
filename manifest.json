@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Clim - クリム",
-  "description": "Clim は現在のページURLをショートカットや右クリックから素早くコピーします。",
+  "description": "Clim はショートカットや右クリックから、テンプレートで整形したページ情報をコピーします。",
   "version": "1.1.0",
   "icons": {
     "16": "icons/icon-16.png",
@@ -26,17 +26,27 @@
     "activeTab",
     "clipboardWrite",
     "contextMenus",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "commands": {
-    "copy-current-url": {
+    "copy-slot-1": {
       "suggested_key": {
         "default": "Alt+Shift+C",
         "windows": "Alt+Shift+C",
         "linux": "Alt+Shift+C",
         "mac": "MacCtrl+Shift+C"
       },
-      "description": "現在のページURLをコピー"
+      "description": "Clim スロット1でコピー"
+    },
+    "copy-slot-2": {
+      "description": "Clim スロット2でコピー"
+    },
+    "copy-slot-3": {
+      "description": "Clim スロット3でコピー"
+    },
+    "copy-slot-4": {
+      "description": "Clim スロット4でコピー"
     }
   }
 }

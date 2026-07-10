@@ -104,7 +104,7 @@ button:hover {
 
 .status {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-top: 24px;
 }
@@ -141,6 +141,47 @@ article p {
   line-height: 1.6;
 }
 
+.guide {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 18px;
+  border: 1px solid rgba(79, 70, 229, 0.14);
+  border-radius: 8px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.guide h2 {
+  font-size: 20px;
+}
+
+.guide p {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.examples {
+  display: grid;
+  gap: 8px;
+}
+
+code {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background:
@@ -151,13 +192,15 @@ article p {
 
   .iconShell,
   article,
+  .guide,
   button.secondary {
     border-color: rgba(129, 140, 248, 0.22);
     background: rgba(17, 24, 39, 0.74);
   }
 
   .lead,
-  article p {
+  article p,
+  .guide p {
     color: #94a3b8;
   }
 }
@@ -169,6 +212,10 @@ article p {
   }
 
   .status {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide {
     grid-template-columns: 1fr;
   }
 }
@@ -181,5 +228,9 @@ article p {
 
   button {
     width: 100%;
+  }
+
+  .status {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,6 +1,11 @@
 // Clim: ショートカットとページ右クリックからURLコピーを起動する。
 
-const COPY_COMMAND = "copy-current-url";
+const COPY_COMMAND_SLOTS = {
+  "copy-slot-1": 1,
+  "copy-slot-2": 2,
+  "copy-slot-3": 3,
+  "copy-slot-4": 4
+};
 const COPY_MENU_ID = "clim-copy-current-url";
 const MENU_CONTEXTS = ["page", "selection", "link", "image", "video", "audio", "editable"];
 let contextMenuBuildQueue = Promise.resolve();
@@ -16,20 +21,22 @@ chrome.runtime.onStartup.addListener(() => {
 queueCreateContextMenus();
 
 chrome.commands.onCommand.addListener(async (command) => {
-  if (command !== COPY_COMMAND) {
+  const slot = COPY_COMMAND_SLOTS[command];
+
+  if (!slot) {
     return;
   }
 
   const tab = await getActiveTab();
 
   if (tab?.id) {
-    await copyUrlFromTab(tab.id);
+    await copyUrlFromTab(tab.id, slot, "shortcut");
   }
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === COPY_MENU_ID && tab?.id) {
-    await copyUrlFromTab(tab.id);
+    await copyUrlFromTab(tab.id, 1, "contextMenu");
   }
 });
 
@@ -89,11 +96,13 @@ async function getActiveTab() {
   return tab;
 }
 
-async function copyUrlFromTab(tabId) {
+async function copyUrlFromTab(tabId, slot = 1, source = "shortcut") {
   try {
     await ensureContentScript(tabId);
     const response = await chrome.tabs.sendMessage(tabId, {
-      type: "CLIM_COPY_CURRENT_URL"
+      type: "CLIM_COPY_CURRENT_URL",
+      slot,
+      source
     });
 
     if (!response?.ok) {
