@@ -11,7 +11,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f8fafc;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(129, 140, 248, 0.2), transparent 30%),
+    linear-gradient(180deg, #f8f7ff 0%, #f8fafc 62%, #eef2ff 100%);
   color: #111827;
 }
 
@@ -33,10 +35,10 @@ body {
   width: 120px;
   height: 120px;
   margin-bottom: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(79, 70, 229, 0.16);
   border-radius: 28px;
-  background: #fff;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 42px rgba(79, 70, 229, 0.18);
 }
 
 .iconShell img {
@@ -45,7 +47,7 @@ body {
 
 .eyebrow {
   margin: 0 0 6px;
-  color: #475569;
+  color: #4f46e5;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0;
@@ -80,10 +82,10 @@ h1 {
 
 button {
   min-height: 40px;
-  border: 1px solid #1f2937;
+  border: 1px solid rgba(79, 70, 229, 0.18);
   border-radius: 8px;
   padding: 0 15px;
-  background: #111827;
+  background: #4f46e5;
   color: #fff;
   font: inherit;
   font-size: 13px;
@@ -92,13 +94,12 @@ button {
 }
 
 button.secondary {
-  border-color: #d1d5db;
-  background: #fff;
-  color: #1f2937;
+  background: rgba(255, 255, 255, 0.72);
+  color: #4f46e5;
 }
 
 button:hover {
-  border-color: #475569;
+  border-color: rgba(79, 70, 229, 0.44);
 }
 
 .status {
@@ -112,10 +113,10 @@ article {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(79, 70, 229, 0.14);
   border-radius: 8px;
   padding: 13px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .mark {
@@ -124,8 +125,8 @@ article {
   height: 10px;
   margin-top: 5px;
   border-radius: 3px;
-  background: #334155;
-  box-shadow: 0 0 0 4px rgba(51, 65, 85, 0.1);
+  background: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
 }
 
 h2 {
@@ -142,25 +143,17 @@ article p {
 
 @media (prefers-color-scheme: dark) {
   body {
-    background: #0f172a;
+    background:
+      radial-gradient(circle at 18% 8%, rgba(129, 140, 248, 0.2), transparent 30%),
+      linear-gradient(180deg, #111827 0%, #0f172a 100%);
     color: #e5e7eb;
   }
 
   .iconShell,
   article,
   button.secondary {
-    border-color: rgba(148, 163, 184, 0.22);
+    border-color: rgba(129, 140, 248, 0.22);
     background: rgba(17, 24, 39, 0.74);
-  }
-
-  button {
-    border-color: #e5e7eb;
-    background: #e5e7eb;
-    color: #111827;
-  }
-
-  button.secondary {
-    color: #e5e7eb;
   }
 
   .lead,
