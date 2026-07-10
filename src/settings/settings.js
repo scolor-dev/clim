@@ -376,6 +376,10 @@ function createRuleCard(rule) {
       <code></code>
       <code></code>
     </div>
+    <details class="ruleDetail">
+      <summary></summary>
+      <pre><code></code></pre>
+    </details>
     <div class="templateActions" aria-label="差し込み項目操作">
       <button type="button" data-edit-rule></button>
       <button type="button" data-delete-rule></button>
@@ -392,6 +396,10 @@ function createRuleCard(rule) {
   variableCode.textContent = `{{${rule.variable}}}`;
   sourceCode.textContent = `取得元: ${getRuleSourceLabel(rule.source)}${rule.pattern ? ` / ${rule.pattern}` : ""}`;
   transformCode.textContent = `整形: ${rule.transforms?.length ? rule.transforms.join(", ") : "なし"}`;
+  card.querySelector(".ruleDetail summary").textContent = rule.readonly
+    ? "組み込み内容を見る"
+    : "設定内容を見る";
+  card.querySelector(".ruleDetail code").textContent = getRuleDetail(rule);
 
   const editButton = card.querySelector("[data-edit-rule]");
   editButton.textContent = rule.readonly ? "編集不可" : "編集";
@@ -427,6 +435,10 @@ function createTransformCard(transform) {
       <code></code>
       <code></code>
     </div>
+    <details class="ruleDetail">
+      <summary></summary>
+      <pre><code></code></pre>
+    </details>
     <div class="templateActions" aria-label="整形ルール操作">
       <button type="button" data-edit-transform></button>
       <button type="button" data-delete-transform></button>
@@ -442,6 +454,10 @@ function createTransformCard(transform) {
   const [idCode, detailCode] = card.querySelectorAll("code");
   idCode.textContent = transform.id;
   detailCode.textContent = getTransformDescription(transform);
+  card.querySelector(".ruleDetail summary").textContent = transform.readonly
+    ? "組み込み内容を見る"
+    : "設定内容を見る";
+  card.querySelector(".ruleDetail code").textContent = getTransformDetail(transform);
 
   const editButton = card.querySelector("[data-edit-transform]");
   editButton.textContent = transform.readonly ? "編集不可" : "編集";
@@ -965,6 +981,77 @@ function getTransformDescription(transform) {
   }
 
   return "組み込み整形";
+}
+
+function getRuleDetail(rule) {
+  return [
+    `差し込み名: {{${rule.variable}}}`,
+    `取得元: ${getRuleSourceLabel(rule.source)}`,
+    `正規表現: ${rule.pattern || "なし"}`,
+    `使う整形ルール: ${rule.transforms?.length ? rule.transforms.join(" -> ") : "なし"}`
+  ].join("\n");
+}
+
+function getTransformDetail(transform) {
+  if (transform.type === "replace") {
+    return [
+      "種類: 正規表現で置換",
+      `検索パターン: ${transform.pattern || "なし"}`,
+      `置換文字: ${transform.replacement || "空文字"}`
+    ].join("\n");
+  }
+
+  if (transform.type === "prepend") {
+    return [
+      "種類: 先頭に追加",
+      `追加文字: ${transform.value || "空文字"}`
+    ].join("\n");
+  }
+
+  if (transform.type === "append") {
+    return [
+      "種類: 末尾に追加",
+      `追加文字: ${transform.value || "空文字"}`
+    ].join("\n");
+  }
+
+  return getBuiltinTransformDetail(transform.id);
+}
+
+function getBuiltinTransformDetail(transformId) {
+  const details = {
+    decodeUri: [
+      "種類: 組み込み整形",
+      "処理: URLエンコードされた文字列を読みやすい文字へ戻します。",
+      "例: %E6%97%A5%E6%9C%AC -> 日本"
+    ],
+    fullWidthAlnum: [
+      "種類: 組み込み整形",
+      "処理: 全角の英数字だけを半角へ変換します。",
+      "例: Ｒｕｓｔ ２０２６ -> Rust 2026"
+    ],
+    removeBracketPrefix: [
+      "種類: 組み込み整形",
+      "処理: タイトル先頭の 【...】 または [...] を削除します。",
+      "例: 【公式】Climの使い方 -> Climの使い方"
+    ],
+    removeSiteSuffix: [
+      "種類: 組み込み整形",
+      "処理: タイトル末尾のサイト名を削除します。",
+      "対象例: | Zenn, - Qiita, ｜クラスメソッド, - GitHub"
+    ],
+    replaceSeparators: [
+      "種類: 組み込み整形",
+      "処理: URL末尾などに含まれる - や _ を空白へ置換します。",
+      "例: rust_axum-guide -> rust axum guide"
+    ],
+    trim: [
+      "種類: 組み込み整形",
+      "処理: 前後の不要な空白を削除します。"
+    ]
+  };
+
+  return (details[transformId] || ["種類: 組み込み整形"]).join("\n");
 }
 
 function openShortcutSettings() {

@@ -341,6 +341,41 @@ h3 {
   font-size: 12px;
 }
 
+.ruleDetail {
+  margin-top: 10px;
+}
+
+.ruleDetail summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  border: 1px solid rgba(79, 70, 229, 0.14);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ruleDetail pre {
+  overflow: auto;
+  margin: 8px 0 0;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+  border-radius: 8px;
+  padding: 11px;
+  background: rgba(248, 250, 252, 0.82);
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.ruleDetail code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
 .ruleSection {
   margin-top: 18px;
 }
@@ -492,6 +527,8 @@ h3 {
   .templateForm textarea,
   .templateForm select,
   .ruleTransforms label,
+  .ruleDetail summary,
+  .ruleDetail pre,
   .switch,
   .lockedBadge,
   .slotAssignment label,
@@ -504,6 +541,8 @@ h3 {
   .navButton,
   .secondaryButton,
   .shortcutButton.isUnset,
+  .ruleDetail summary,
+  .ruleDetail pre,
   .templateActions button {
     color: #e5e7eb;
   }
