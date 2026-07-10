@@ -8,11 +8,101 @@ const DEFAULT_TEMPLATES = [
     body: "{{url}}",
     readonly: true,
     deletable: false
+  },
+  {
+    id: "markdown-link",
+    name: "Markdownリンク",
+    body: "[{{cleanTitle}}]({{url}})",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "markdown-quote",
+    name: "選択引用Markdown",
+    body: "{{if selectedText then \"> \" + selectedText + \"\\n\\n\" else \"\"}}[{{cleanTitle}}]({{url}})",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "html-link",
+    name: "HTMLリンク",
+    body: "<a href=\"{{url}}\">{{cleanTitle}}</a>",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "scrapbox-link",
+    name: "Scrapboxリンク",
+    body: "[{{cleanTitle}} {{url}}]",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "notion-memo",
+    name: "Notionメモ",
+    body: "{{cleanTitle}}\n{{url}}\n{{if description then description else siteName}}",
+    readonly: false,
+    deletable: true,
+    seeded: true
   }
 ];
+const DEFAULT_VARIABLE_RULES = [
+  {
+    id: "clean-title",
+    name: "クリーンタイトル",
+    variable: "cleanTitle",
+    source: "title",
+    pattern: "",
+    transforms: ["fullWidthAlnum", "removeBracketPrefix", "removeSiteSuffix", "trim"],
+    readonly: true,
+    deletable: false
+  },
+  {
+    id: "url-slug",
+    name: "URL末尾",
+    variable: "urlSlug",
+    source: "pathname",
+    pattern: "([^/]+)\\/?$",
+    transforms: ["decodeUri", "replaceSeparators", "trim"],
+    readonly: true,
+    deletable: false
+  }
+];
+const DEFAULT_TRANSFORM_RULES = [
+  { id: "decodeUri", name: "URLデコード", type: "builtin", readonly: true, deletable: false },
+  { id: "fullWidthAlnum", name: "全角英数字を半角化", type: "builtin", readonly: true, deletable: false },
+  { id: "removeBracketPrefix", name: "先頭の括弧情報を削除", type: "builtin", readonly: true, deletable: false },
+  { id: "removeSiteSuffix", name: "末尾のサイト名を削除", type: "builtin", readonly: true, deletable: false },
+  { id: "replaceSeparators", name: "区切り文字を空白へ", type: "builtin", readonly: true, deletable: false },
+  { id: "trim", name: "前後空白を削除", type: "builtin", readonly: true, deletable: false }
+];
+const BASE_VARIABLE_NAMES = new Set([
+  "url",
+  "title",
+  "canonicalUrl",
+  "description",
+  "siteName",
+  "ogTitle",
+  "ogDescription",
+  "ogImage",
+  "publishedTime",
+  "modifiedTime",
+  "author",
+  "lang",
+  "selectedText",
+  "domain",
+  "date",
+  "datetime"
+]);
 const DEFAULT_CLIM_OPTIONS = {
   toastEnabled: true,
   templates: DEFAULT_TEMPLATES,
+  variableRules: DEFAULT_VARIABLE_RULES,
+  transformRules: DEFAULT_TRANSFORM_RULES,
   shortcutSlots: {
     1: URL_COPY_TEMPLATE_ID,
     2: URL_COPY_TEMPLATE_ID,
@@ -29,12 +119,16 @@ const COMMAND_LABELS = {
 
 let climOptions = DEFAULT_CLIM_OPTIONS;
 let editingTemplateId = "";
+let editingRuleId = "";
+let editingTransformId = "";
 
 document.addEventListener("DOMContentLoaded", async () => {
   setupTabs();
   setupShortcutButtons();
   setupToastToggle();
   setupTemplateForm();
+  setupRuleForm();
+  setupTransformForm();
 
   climOptions = await getClimOptions();
   renderOptions();
@@ -90,6 +184,36 @@ function setupTemplateForm() {
   });
 }
 
+function setupRuleForm() {
+  document.getElementById("addRule")?.addEventListener("click", () => {
+    showRuleForm();
+  });
+
+  document.getElementById("cancelRule")?.addEventListener("click", () => {
+    hideRuleForm();
+  });
+
+  document.getElementById("ruleForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await saveRuleFromForm();
+  });
+}
+
+function setupTransformForm() {
+  document.getElementById("addTransform")?.addEventListener("click", () => {
+    showTransformForm();
+  });
+
+  document.getElementById("cancelTransform")?.addEventListener("click", () => {
+    hideTransformForm();
+  });
+
+  document.getElementById("transformForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await saveTransformFromForm();
+  });
+}
+
 async function refreshShortcuts() {
   let commands = [];
 
@@ -131,6 +255,8 @@ function renderOptions() {
   }
 
   renderTemplates();
+  renderRules();
+  renderTransforms();
   renderSlotNotes();
 }
 
@@ -142,6 +268,27 @@ function renderTemplates() {
   }
 
   list.replaceChildren(...climOptions.templates.map(createTemplateCard));
+}
+
+function renderRules() {
+  const list = document.getElementById("ruleList");
+
+  if (!list) {
+    return;
+  }
+
+  list.replaceChildren(...climOptions.variableRules.map(createRuleCard));
+}
+
+function renderTransforms() {
+  const list = document.getElementById("transformList");
+
+  if (!list) {
+    return;
+  }
+
+  list.replaceChildren(...climOptions.transformRules.map(createTransformCard));
+  renderTransformChoices();
 }
 
 function createTemplateCard(template) {
@@ -176,10 +323,14 @@ function createTemplateCard(template) {
   card.querySelector("h3").textContent = template.name;
   card.querySelector(".templateHeader p").textContent = template.readonly
     ? "現在のページURLを加工せずそのままコピーします。"
-    : "ユーザー追加テンプレートです。";
+    : template.seeded
+      ? "初期テンプレートです。編集・削除できます。"
+      : "ユーザー追加テンプレートです。";
   card.querySelector(".lockedBadge").textContent = template.readonly
     ? "初期テンプレート"
-    : "カスタム";
+    : template.seeded
+      ? "編集可"
+      : "カスタム";
   card.querySelector("code").textContent = template.body;
 
   card.querySelectorAll("[data-slot-assignment]").forEach((checkbox) => {
@@ -205,6 +356,126 @@ function createTemplateCard(template) {
   });
 
   return card;
+}
+
+function createRuleCard(rule) {
+  const card = document.createElement("article");
+  card.className = "templateCard";
+  card.dataset.ruleId = rule.id;
+
+  card.innerHTML = `
+    <div class="templateHeader">
+      <div>
+        <h3></h3>
+        <p></p>
+      </div>
+      <span class="lockedBadge"></span>
+    </div>
+    <div class="ruleMeta">
+      <code></code>
+      <code></code>
+      <code></code>
+    </div>
+    <div class="templateActions" aria-label="ルール操作">
+      <button type="button" data-edit-rule></button>
+      <button type="button" data-delete-rule></button>
+    </div>
+  `;
+
+  card.querySelector("h3").textContent = rule.name;
+  card.querySelector(".templateHeader p").textContent = rule.readonly
+    ? "初期ルールです。テンプレート変数として利用できます。"
+    : "ユーザー追加ルールです。";
+  card.querySelector(".lockedBadge").textContent = rule.readonly ? "初期ルール" : "カスタム";
+
+  const [variableCode, sourceCode, transformCode] = card.querySelectorAll("code");
+  variableCode.textContent = `{{${rule.variable}}}`;
+  sourceCode.textContent = `取得元: ${getRuleSourceLabel(rule.source)}${rule.pattern ? ` / ${rule.pattern}` : ""}`;
+  transformCode.textContent = `変換: ${rule.transforms?.length ? rule.transforms.join(", ") : "なし"}`;
+
+  const editButton = card.querySelector("[data-edit-rule]");
+  editButton.textContent = rule.readonly ? "編集不可" : "編集";
+  editButton.disabled = rule.readonly;
+  editButton.addEventListener("click", () => {
+    showRuleForm(rule);
+  });
+
+  const deleteButton = card.querySelector("[data-delete-rule]");
+  deleteButton.textContent = rule.deletable === false ? "削除不可" : "削除";
+  deleteButton.disabled = rule.deletable === false;
+  deleteButton.addEventListener("click", async () => {
+    await deleteRule(rule.id);
+  });
+
+  return card;
+}
+
+function createTransformCard(transform) {
+  const card = document.createElement("article");
+  card.className = "templateCard";
+  card.dataset.transformId = transform.id;
+
+  card.innerHTML = `
+    <div class="templateHeader">
+      <div>
+        <h3></h3>
+        <p></p>
+      </div>
+      <span class="lockedBadge"></span>
+    </div>
+    <div class="ruleMeta">
+      <code></code>
+      <code></code>
+    </div>
+    <div class="templateActions" aria-label="変換ルール操作">
+      <button type="button" data-edit-transform></button>
+      <button type="button" data-delete-transform></button>
+    </div>
+  `;
+
+  card.querySelector("h3").textContent = transform.name;
+  card.querySelector(".templateHeader p").textContent = transform.readonly
+    ? "組み込み変換です。変数ルールから利用できます。"
+    : "ユーザー追加変換です。";
+  card.querySelector(".lockedBadge").textContent = transform.readonly ? "組み込み" : "カスタム";
+
+  const [idCode, detailCode] = card.querySelectorAll("code");
+  idCode.textContent = transform.id;
+  detailCode.textContent = getTransformDescription(transform);
+
+  const editButton = card.querySelector("[data-edit-transform]");
+  editButton.textContent = transform.readonly ? "編集不可" : "編集";
+  editButton.disabled = transform.readonly;
+  editButton.addEventListener("click", () => {
+    showTransformForm(transform);
+  });
+
+  const deleteButton = card.querySelector("[data-delete-transform]");
+  deleteButton.textContent = transform.deletable === false ? "削除不可" : "削除";
+  deleteButton.disabled = transform.deletable === false;
+  deleteButton.addEventListener("click", async () => {
+    await deleteTransform(transform.id);
+  });
+
+  return card;
+}
+
+function renderTransformChoices() {
+  const choices = document.getElementById("ruleTransformChoices");
+
+  if (!choices) {
+    return;
+  }
+
+  choices.replaceChildren(...climOptions.transformRules.map((transform) => {
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = transform.id;
+    checkbox.dataset.ruleTransform = "";
+    label.append(checkbox, transform.name);
+    return label;
+  }));
 }
 
 async function assignTemplateToSlot(templateId, slot, assigned) {
@@ -333,6 +604,228 @@ async function deleteTemplate(templateId) {
   renderSlotNotes();
 }
 
+function showRuleForm(rule = null) {
+  const form = document.getElementById("ruleForm");
+  const nameInput = document.getElementById("ruleName");
+  const variableInput = document.getElementById("ruleVariable");
+  const sourceInput = document.getElementById("ruleSource");
+  const patternInput = document.getElementById("rulePattern");
+
+  if (!form || !nameInput || !variableInput || !sourceInput || !patternInput) {
+    return;
+  }
+
+  editingRuleId = rule?.id || "";
+  nameInput.value = rule?.name || "";
+  variableInput.value = rule?.variable || "";
+  sourceInput.value = rule?.source || "title";
+  patternInput.value = rule?.pattern || "";
+  document.querySelectorAll("[data-rule-transform]").forEach((checkbox) => {
+    checkbox.checked = rule?.transforms?.includes(checkbox.value) || false;
+  });
+  setRuleError("");
+  form.hidden = false;
+  nameInput.focus();
+}
+
+function hideRuleForm() {
+  const form = document.getElementById("ruleForm");
+
+  if (!form) {
+    return;
+  }
+
+  editingRuleId = "";
+  form.reset();
+  setRuleError("");
+  form.hidden = true;
+}
+
+function showTransformForm(transform = null) {
+  const form = document.getElementById("transformForm");
+  const nameInput = document.getElementById("transformName");
+  const idInput = document.getElementById("transformId");
+  const typeInput = document.getElementById("transformType");
+  const patternInput = document.getElementById("transformPattern");
+  const valueInput = document.getElementById("transformValue");
+
+  if (!form || !nameInput || !idInput || !typeInput || !patternInput || !valueInput) {
+    return;
+  }
+
+  editingTransformId = transform?.id || "";
+  nameInput.value = transform?.name || "";
+  idInput.value = transform?.id || "";
+  idInput.disabled = Boolean(transform);
+  typeInput.value = transform?.type === "builtin" ? "replace" : transform?.type || "replace";
+  patternInput.value = transform?.pattern || "";
+  valueInput.value = transform?.replacement ?? transform?.value ?? "";
+  setTransformError("");
+  form.hidden = false;
+  nameInput.focus();
+}
+
+function hideTransformForm() {
+  const form = document.getElementById("transformForm");
+  const idInput = document.getElementById("transformId");
+
+  if (!form) {
+    return;
+  }
+
+  editingTransformId = "";
+  form.reset();
+  if (idInput) {
+    idInput.disabled = false;
+  }
+  setTransformError("");
+  form.hidden = true;
+}
+
+async function saveRuleFromForm() {
+  const name = document.getElementById("ruleName")?.value.trim();
+  const variable = document.getElementById("ruleVariable")?.value.trim();
+  const source = document.getElementById("ruleSource")?.value;
+  const pattern = document.getElementById("rulePattern")?.value.trim();
+  const transforms = Array.from(document.querySelectorAll("[data-rule-transform]:checked"))
+    .map((checkbox) => checkbox.value);
+
+  if (!name || !variable || !source) {
+    return;
+  }
+
+  const validationError = validateRuleVariable(variable, editingRuleId);
+
+  if (validationError) {
+    setRuleError(validationError);
+    return;
+  }
+
+  if (editingRuleId) {
+    climOptions = {
+      ...climOptions,
+      variableRules: climOptions.variableRules.map((rule) => {
+        if (rule.id !== editingRuleId || rule.readonly) {
+          return rule;
+        }
+
+        return {
+          ...rule,
+          name,
+          variable,
+          source,
+          pattern,
+          transforms
+        };
+      })
+    };
+  } else {
+    climOptions = {
+      ...climOptions,
+      variableRules: [
+        ...climOptions.variableRules,
+        {
+          id: crypto.randomUUID(),
+          name,
+          variable,
+          source,
+          pattern,
+          transforms,
+          readonly: false,
+          deletable: true
+        }
+      ]
+    };
+  }
+
+  await saveClimOptions(climOptions);
+  hideRuleForm();
+  renderRules();
+}
+
+async function saveTransformFromForm() {
+  const name = document.getElementById("transformName")?.value.trim();
+  const id = document.getElementById("transformId")?.value.trim();
+  const type = document.getElementById("transformType")?.value;
+  const pattern = document.getElementById("transformPattern")?.value;
+  const value = document.getElementById("transformValue")?.value;
+
+  if (!name || !id || !type) {
+    return;
+  }
+
+  const validationError = validateTransformRule({ id, type, pattern }, editingTransformId);
+
+  if (validationError) {
+    setTransformError(validationError);
+    return;
+  }
+
+  const nextTransform = {
+    id,
+    name,
+    type,
+    pattern,
+    replacement: type === "replace" ? value : "",
+    value: type === "replace" ? "" : value,
+    readonly: false,
+    deletable: true
+  };
+
+  climOptions = {
+    ...climOptions,
+    transformRules: editingTransformId
+      ? climOptions.transformRules.map((transform) =>
+          transform.id === editingTransformId && !transform.readonly
+            ? { ...transform, ...nextTransform, id: transform.id }
+            : transform
+        )
+      : [...climOptions.transformRules, nextTransform]
+  };
+
+  await saveClimOptions(climOptions);
+  hideTransformForm();
+  renderTransforms();
+  renderRules();
+}
+
+async function deleteRule(ruleId) {
+  const rule = climOptions.variableRules.find((item) => item.id === ruleId);
+
+  if (!rule || rule.deletable === false) {
+    return;
+  }
+
+  climOptions = {
+    ...climOptions,
+    variableRules: climOptions.variableRules.filter((item) => item.id !== ruleId)
+  };
+
+  await saveClimOptions(climOptions);
+  renderRules();
+}
+
+async function deleteTransform(transformId) {
+  const transform = climOptions.transformRules.find((item) => item.id === transformId);
+
+  if (!transform || transform.deletable === false) {
+    return;
+  }
+
+  climOptions = {
+    ...climOptions,
+    transformRules: climOptions.transformRules.filter((item) => item.id !== transformId),
+    variableRules: climOptions.variableRules.map((rule) => ({
+      ...rule,
+      transforms: (rule.transforms || []).filter((id) => id !== transformId)
+    }))
+  };
+
+  await saveClimOptions(climOptions);
+  renderTransforms();
+  renderRules();
+}
+
 async function getClimOptions() {
   let stored = {};
 
@@ -348,6 +841,8 @@ async function getClimOptions() {
     ...DEFAULT_CLIM_OPTIONS,
     ...options,
     templates: mergeDefaultTemplates(options.templates),
+    variableRules: mergeDefaultVariableRules(options.variableRules),
+    transformRules: mergeDefaultTransformRules(options.transformRules),
     shortcutSlots: {
       ...DEFAULT_CLIM_OPTIONS.shortcutSlots,
       ...options.shortcutSlots
@@ -356,8 +851,23 @@ async function getClimOptions() {
 }
 
 function mergeDefaultTemplates(templates = []) {
-  const customTemplates = templates.filter((template) => template.id !== URL_COPY_TEMPLATE_ID);
+  const defaultTemplateIds = new Set(DEFAULT_TEMPLATES.map((template) => template.id));
+  const customTemplates = templates.filter((template) => !defaultTemplateIds.has(template.id));
   return [...DEFAULT_TEMPLATES, ...customTemplates];
+}
+
+function mergeDefaultVariableRules(rules = []) {
+  const customRules = rules.filter(
+    (rule) => !DEFAULT_VARIABLE_RULES.some((defaultRule) => defaultRule.id === rule.id)
+  );
+  return [...DEFAULT_VARIABLE_RULES, ...customRules];
+}
+
+function mergeDefaultTransformRules(rules = []) {
+  const customRules = rules.filter(
+    (rule) => !DEFAULT_TRANSFORM_RULES.some((defaultRule) => defaultRule.id === rule.id)
+  );
+  return [...DEFAULT_TRANSFORM_RULES, ...customRules];
 }
 
 async function saveClimOptions(options) {
@@ -372,6 +882,89 @@ async function saveClimOptions(options) {
 
 function findTemplate(templateId) {
   return climOptions.templates.find((template) => template.id === templateId);
+}
+
+function validateRuleVariable(variable, currentRuleId = "") {
+  if (!/^[A-Za-z][A-Za-z0-9]*$/.test(variable)) {
+    return "変数名は半角英字ではじめ、半角英数字のみで入力してください。";
+  }
+
+  if (BASE_VARIABLE_NAMES.has(variable)) {
+    return "基本セットと同じ変数名は使えません。";
+  }
+
+  const duplicatedRule = climOptions.variableRules.find((rule) =>
+    rule.variable === variable && rule.id !== currentRuleId
+  );
+
+  return duplicatedRule ? "同じ変数名のルールがすでにあります。" : "";
+}
+
+function validateTransformRule(transform, currentTransformId = "") {
+  if (!/^[A-Za-z][A-Za-z0-9]*$/.test(transform.id)) {
+    return "処理IDは半角英字ではじめ、半角英数字のみで入力してください。";
+  }
+
+  const duplicatedTransform = climOptions.transformRules.find((rule) =>
+    rule.id === transform.id && rule.id !== currentTransformId
+  );
+
+  if (duplicatedTransform) {
+    return "同じ処理IDの変換ルールがすでにあります。";
+  }
+
+  if (transform.type === "replace" && !transform.pattern) {
+    return "正規表現で置換する場合は、検索パターンを入力してください。";
+  }
+
+  return "";
+}
+
+function setRuleError(message) {
+  const error = document.getElementById("ruleError");
+
+  if (!error) {
+    return;
+  }
+
+  error.textContent = message;
+  error.hidden = !message;
+}
+
+function setTransformError(message) {
+  const error = document.getElementById("transformError");
+
+  if (!error) {
+    return;
+  }
+
+  error.textContent = message;
+  error.hidden = !message;
+}
+
+function getRuleSourceLabel(source) {
+  return {
+    title: "ページタイトル",
+    url: "URL全体",
+    pathname: "URLパス",
+    hostname: "ホスト名"
+  }[source] || source;
+}
+
+function getTransformDescription(transform) {
+  if (transform.type === "replace") {
+    return `正規表現置換: ${transform.pattern || ""} -> ${transform.replacement || ""}`;
+  }
+
+  if (transform.type === "prepend") {
+    return `先頭に追加: ${transform.value || ""}`;
+  }
+
+  if (transform.type === "append") {
+    return `末尾に追加: ${transform.value || ""}`;
+  }
+
+  return "組み込み変換";
 }
 
 function openShortcutSettings() {

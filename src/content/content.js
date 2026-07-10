@@ -9,11 +9,83 @@ const DEFAULT_TEMPLATES = [
     body: "{{url}}",
     readonly: true,
     deletable: false
+  },
+  {
+    id: "markdown-link",
+    name: "Markdownリンク",
+    body: "[{{cleanTitle}}]({{url}})",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "markdown-quote",
+    name: "選択引用Markdown",
+    body: "{{if selectedText then \"> \" + selectedText + \"\\n\\n\" else \"\"}}[{{cleanTitle}}]({{url}})",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "html-link",
+    name: "HTMLリンク",
+    body: "<a href=\"{{url}}\">{{cleanTitle}}</a>",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "scrapbox-link",
+    name: "Scrapboxリンク",
+    body: "[{{cleanTitle}} {{url}}]",
+    readonly: false,
+    deletable: true,
+    seeded: true
+  },
+  {
+    id: "notion-memo",
+    name: "Notionメモ",
+    body: "{{cleanTitle}}\n{{url}}\n{{if description then description else siteName}}",
+    readonly: false,
+    deletable: true,
+    seeded: true
   }
+];
+const DEFAULT_VARIABLE_RULES = [
+  {
+    id: "clean-title",
+    name: "クリーンタイトル",
+    variable: "cleanTitle",
+    source: "title",
+    pattern: "",
+    transforms: ["fullWidthAlnum", "removeBracketPrefix", "removeSiteSuffix", "trim"],
+    readonly: true,
+    deletable: false
+  },
+  {
+    id: "url-slug",
+    name: "URL末尾",
+    variable: "urlSlug",
+    source: "pathname",
+    pattern: "([^/]+)\\/?$",
+    transforms: ["decodeUri", "replaceSeparators", "trim"],
+    readonly: true,
+    deletable: false
+  }
+];
+const DEFAULT_TRANSFORM_RULES = [
+  { id: "decodeUri", name: "URLデコード", type: "builtin", readonly: true, deletable: false },
+  { id: "fullWidthAlnum", name: "全角英数字を半角化", type: "builtin", readonly: true, deletable: false },
+  { id: "removeBracketPrefix", name: "先頭の括弧情報を削除", type: "builtin", readonly: true, deletable: false },
+  { id: "removeSiteSuffix", name: "末尾のサイト名を削除", type: "builtin", readonly: true, deletable: false },
+  { id: "replaceSeparators", name: "区切り文字を空白へ", type: "builtin", readonly: true, deletable: false },
+  { id: "trim", name: "前後空白を削除", type: "builtin", readonly: true, deletable: false }
 ];
 const DEFAULT_CLIM_OPTIONS = {
   toastEnabled: true,
   templates: DEFAULT_TEMPLATES,
+  variableRules: DEFAULT_VARIABLE_RULES,
+  transformRules: DEFAULT_TRANSFORM_RULES,
   shortcutSlots: {
     1: URL_COPY_TEMPLATE_ID,
     2: URL_COPY_TEMPLATE_ID,
@@ -64,13 +136,19 @@ async function copyCurrentUrl(slot = 1, source = "shortcut") {
     return { skipped: true };
   }
 
-  const text = renderTemplate(source === "shortcut" ? template.body : "{{url}}", getTemplateValues());
+  const values = applyVariableRules(getTemplateValues(), options.variableRules, options.transformRules);
+  const text = renderTemplate(source === "shortcut" ? template.body : "{{url}}", values);
 
   await writeToClipboard(text);
 
   if (options.toastEnabled) {
-    const label = source === "shortcut" ? `スロット${slot}` : "右クリック";
-    showToast(`${label}でURLをコピーしました`, "success");
+    // ショートカット時はスロットに割り当てられたテンプレート、
+    // 右クリック時は既定の「URLコピー」テンプレートの名前を参照する
+    const usedTemplate =
+      source === "shortcut" ? template : findTemplate(options.templates, URL_COPY_TEMPLATE_ID);
+    const templateName = usedTemplate?.name || "URL";
+
+    showToast(`「${templateName}」をコピーしました`, "success");
   }
 
   return { text };
@@ -96,6 +174,8 @@ async function getClimOptions() {
     ...DEFAULT_CLIM_OPTIONS,
     ...options,
     templates: mergeDefaultTemplates(options.templates),
+    variableRules: mergeDefaultVariableRules(options.variableRules),
+    transformRules: mergeDefaultTransformRules(options.transformRules),
     shortcutSlots: {
       ...DEFAULT_CLIM_OPTIONS.shortcutSlots,
       ...options.shortcutSlots
@@ -104,8 +184,23 @@ async function getClimOptions() {
 }
 
 function mergeDefaultTemplates(templates = []) {
-  const customTemplates = templates.filter((template) => template.id !== URL_COPY_TEMPLATE_ID);
+  const defaultTemplateIds = new Set(DEFAULT_TEMPLATES.map((template) => template.id));
+  const customTemplates = templates.filter((template) => !defaultTemplateIds.has(template.id));
   return [...DEFAULT_TEMPLATES, ...customTemplates];
+}
+
+function mergeDefaultVariableRules(rules = []) {
+  const customRules = rules.filter(
+    (rule) => !DEFAULT_VARIABLE_RULES.some((defaultRule) => defaultRule.id === rule.id)
+  );
+  return [...DEFAULT_VARIABLE_RULES, ...customRules];
+}
+
+function mergeDefaultTransformRules(rules = []) {
+  const customRules = rules.filter(
+    (rule) => !DEFAULT_TRANSFORM_RULES.some((defaultRule) => defaultRule.id === rule.id)
+  );
+  return [...DEFAULT_TRANSFORM_RULES, ...customRules];
 }
 
 function findTemplate(templates, templateId) {
@@ -116,7 +211,7 @@ function getTemplateValues() {
   const now = new Date();
   const canonicalUrl = getLinkHref("canonical");
 
-  return {
+  const values = {
     url: window.location.href,
     title: document.title,
     canonicalUrl,
@@ -134,6 +229,136 @@ function getTemplateValues() {
     date: now.toISOString().slice(0, 10),
     datetime: now.toISOString()
   };
+
+  return values;
+}
+
+function applyVariableRules(values, rules, transformRules) {
+  return rules.reduce((nextValues, rule) => {
+    if (!isValidVariableName(rule.variable) || nextValues[rule.variable] !== undefined) {
+      return nextValues;
+    }
+
+    const rawValue = getRuleSourceValue(rule);
+    const extractedValue = extractRuleValue(rawValue, rule.pattern);
+    const transformedValue = applyRuleTransforms(extractedValue, rule.transforms, transformRules);
+
+    return {
+      ...nextValues,
+      [rule.variable]: transformedValue
+    };
+  }, values);
+}
+
+function getRuleSourceValue(rule) {
+  if (rule.source === "title") {
+    return document.title;
+  }
+
+  if (rule.source === "url") {
+    return window.location.href;
+  }
+
+  if (rule.source === "pathname") {
+    return window.location.pathname;
+  }
+
+  if (rule.source === "hostname") {
+    return window.location.hostname;
+  }
+
+  return "";
+}
+
+function extractRuleValue(value, pattern) {
+  if (!pattern) {
+    return value;
+  }
+
+  try {
+    const match = value.match(new RegExp(pattern));
+    return match?.[1] ?? match?.[0] ?? "";
+  } catch (error) {
+    console.warn("[Clim] 変数ルールの正規表現が不正です。", pattern, error);
+    return "";
+  }
+}
+
+function applyRuleTransforms(value, transforms = [], transformRules = []) {
+  const transformById = new Map(transformRules.map((rule) => [rule.id, rule]));
+
+  return transforms.reduce((nextValue, transformId) => {
+    const transform = transformById.get(transformId);
+
+    if (!transform) {
+      return nextValue;
+    }
+
+    if (transform.type === "replace") {
+      return replaceByTransform(nextValue, transform);
+    }
+
+    if (transform.type === "prepend") {
+      return `${transform.value || ""}${nextValue}`;
+    }
+
+    if (transform.type === "append") {
+      return `${nextValue}${transform.value || ""}`;
+    }
+
+    if (transform.id === "decodeUri") {
+      return decodeUriSafely(nextValue);
+    }
+
+    if (transform.id === "fullWidthAlnum") {
+      return normalizeFullWidthAlnum(nextValue);
+    }
+
+    if (transform.id === "removeBracketPrefix") {
+      return nextValue.replace(/^\s*(?:【[^】]+】|\[[^\]]+\])\s*/g, "");
+    }
+
+    if (transform.id === "removeSiteSuffix") {
+      return nextValue.replace(/\s*(?:[|\-｜–—]\s*(?:Zenn|Qiita|note|Note|クラスメソッド|はてなブログ|GitHub))\s*$/i, "");
+    }
+
+    if (transform.id === "replaceSeparators") {
+      return nextValue.replace(/[-_]+/g, " ");
+    }
+
+    if (transform.id === "trim") {
+      return nextValue.trim();
+    }
+
+    return nextValue;
+  }, value || "");
+}
+
+function replaceByTransform(value, transform) {
+  try {
+    return value.replace(new RegExp(transform.pattern || "", "g"), transform.replacement || "");
+  } catch (error) {
+    console.warn("[Clim] 変換ルールの正規表現が不正です。", transform.pattern, error);
+    return value;
+  }
+}
+
+function decodeUriSafely(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch (_error) {
+    return value;
+  }
+}
+
+function normalizeFullWidthAlnum(value) {
+  return value.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (character) =>
+    String.fromCharCode(character.charCodeAt(0) - 0xfee0)
+  );
+}
+
+function isValidVariableName(name) {
+  return /^[A-Za-z][A-Za-z0-9]*$/.test(name || "");
 }
 
 function renderTemplate(template, values) {

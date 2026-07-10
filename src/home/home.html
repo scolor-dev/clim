@@ -47,7 +47,7 @@
           <span class="mark"></span>
           <div>
             <h2>テンプレート</h2>
-            <p>{{title}} や {{selectedText}}、if条件、文字連結でコピー形式を作れます。</p>
+            <p>{{title}} や {{cleanTitle}}、if条件、文字連結でコピー形式を作れます。</p>
           </div>
         </article>
       </section>
@@ -56,10 +56,11 @@
         <div>
           <p class="eyebrow">template guide</p>
           <h2 id="templateGuideTitle">テンプレートの書き方</h2>
-          <p>設定ページのテンプレート画面から、ショートカットスロットごとにコピー形式を割り当てできます。</p>
+          <p>テンプレート画面でコピー形式を作り、ルール画面で独自の変数を追加できます。</p>
         </div>
         <div class="examples">
           <code>[{{title}}]({{url}})</code>
+          <code>[{{cleanTitle}}]({{url}})</code>
           <code>{{title + " - " + url}}</code>
           <code>{{if selectedText then "&gt; " + selectedText + "\n\n" else ""}}[{{title}}]({{url}})</code>
         </div>

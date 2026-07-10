@@ -22,6 +22,7 @@
       <nav class="settingsNav" aria-label="設定カテゴリ">
         <button class="navButton isActive" type="button" data-tab-button="settingsPanel">設定</button>
         <button class="navButton" type="button" data-tab-button="templatesPanel">テンプレート</button>
+        <button class="navButton" type="button" data-tab-button="rulesPanel">ルールと変数</button>
       </nav>
 
       <section class="panel" id="settingsPanel" aria-labelledby="settingsTitle" data-tab-panel>
@@ -83,7 +84,7 @@
             <span>本文</span>
             <textarea id="templateBody" rows="6" required></textarea>
           </label>
-          <p class="templateHelp">利用可能: {{url}}, {{title}}, {{canonicalUrl}}, {{description}}, {{siteName}}, {{author}}, {{selectedText}}, {{domain}}, {{date}}, {{datetime}}。文字列は "..."、連結は +、条件は {{if selectedText then "> " + selectedText else ""}} の形で使えます。</p>
+          <p class="templateHelp">利用可能: {{url}}, {{title}}, {{canonicalUrl}}, {{description}}, {{siteName}}, {{author}}, {{selectedText}}, {{domain}}, {{date}}, {{datetime}}, {{cleanTitle}}, {{urlSlug}}。ルール画面で独自変数も追加できます。</p>
           <div class="templateFormActions">
             <button type="submit">保存</button>
             <button type="button" class="secondaryButton" id="cancelTemplate">キャンセル</button>
@@ -91,6 +92,106 @@
         </form>
 
         <div id="templateList"></div>
+      </section>
+
+      <section class="panel" id="rulesPanel" aria-labelledby="rulesTitle" data-tab-panel hidden>
+        <div class="panelHeader">
+          <div>
+            <p class="eyebrow">rules and variables</p>
+            <h2 id="rulesTitle">ルールと変数</h2>
+          </div>
+        </div>
+
+        <section class="ruleSection" aria-labelledby="transformTitle">
+          <div class="panelHeader">
+            <div>
+              <h3 id="transformTitle">変換ルール</h3>
+              <p class="templateHelp">値を整える処理です。変数ルールから組み合わせて使います。</p>
+            </div>
+            <button class="addTemplateButton" type="button" id="addTransform">変換追加</button>
+          </div>
+
+          <form class="templateForm" id="transformForm" hidden>
+            <label>
+              <span>表示名</span>
+              <input type="text" id="transformName" maxlength="40" required>
+            </label>
+            <label>
+              <span>処理ID</span>
+              <input type="text" id="transformId" pattern="[A-Za-z][A-Za-z0-9]*" required>
+            </label>
+            <label>
+              <span>処理タイプ</span>
+              <select id="transformType" required>
+                <option value="replace">正規表現で置換</option>
+                <option value="prepend">先頭に追加</option>
+                <option value="append">末尾に追加</option>
+              </select>
+            </label>
+            <label>
+              <span>検索パターン</span>
+              <input type="text" id="transformPattern">
+            </label>
+            <label>
+              <span>置換/追加文字</span>
+              <input type="text" id="transformValue">
+            </label>
+            <p class="templateHelp">処理IDは他の変換ルールと重複できません。正規表現置換では検索パターンを必ず指定してください。</p>
+            <p class="formError" id="transformError" role="alert" hidden></p>
+            <div class="templateFormActions">
+              <button type="submit">保存</button>
+              <button type="button" class="secondaryButton" id="cancelTransform">キャンセル</button>
+            </div>
+          </form>
+
+          <div id="transformList"></div>
+        </section>
+
+        <section class="ruleSection" aria-labelledby="variableTitle">
+          <div class="panelHeader">
+            <div>
+              <h3 id="variableTitle">変数</h3>
+              <p class="templateHelp">取得元から値を取り出し、変換ルールを通してテンプレート変数を作ります。</p>
+            </div>
+            <button class="addTemplateButton" type="button" id="addRule">変数追加</button>
+          </div>
+
+        <form class="templateForm" id="ruleForm" hidden>
+          <label>
+            <span>表示名</span>
+            <input type="text" id="ruleName" maxlength="40" required>
+          </label>
+          <label>
+            <span>変数名</span>
+            <input type="text" id="ruleVariable" pattern="[A-Za-z][A-Za-z0-9]*" required>
+          </label>
+          <label>
+            <span>取得元</span>
+            <select id="ruleSource" required>
+              <option value="title">ページタイトル</option>
+              <option value="url">URL全体</option>
+              <option value="pathname">URLパス</option>
+              <option value="hostname">ホスト名</option>
+            </select>
+          </label>
+          <label>
+            <span>正規表現</span>
+            <input type="text" id="rulePattern" placeholder="([^/]+)\\/?$">
+          </label>
+          <fieldset class="ruleTransforms">
+            <legend>変換</legend>
+            <div id="ruleTransformChoices"></div>
+          </fieldset>
+          <p class="templateHelp">変数名は基本セットや他のルールと重複できません。テンプレートでは {{変数名}} として使えます。</p>
+          <p class="formError" id="ruleError" role="alert" hidden></p>
+          <div class="templateFormActions">
+            <button type="submit">保存</button>
+            <button type="button" class="secondaryButton" id="cancelRule">キャンセル</button>
+          </div>
+        </form>
+
+        <div id="ruleList"></div>
+        </section>
       </section>
     </main>
     <script src="settings.js"></script>

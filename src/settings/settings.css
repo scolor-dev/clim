@@ -257,7 +257,8 @@ h3 {
 }
 
 .templateForm input,
-.templateForm textarea {
+.templateForm textarea,
+.templateForm select {
   width: 100%;
   border: 1px solid rgba(79, 70, 229, 0.16);
   border-radius: 8px;
@@ -277,6 +278,71 @@ h3 {
   color: #64748b;
   font-size: 12px;
   line-height: 1.6;
+}
+
+.formError {
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: rgba(254, 226, 226, 0.72);
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ruleTransforms {
+  display: grid;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+}
+
+#ruleTransformChoices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ruleTransforms legend {
+  margin-bottom: 2px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ruleTransforms label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ruleMeta {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.ruleMeta code {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 12px;
+}
+
+.ruleSection {
+  margin-top: 18px;
 }
 
 .templateFormActions {
@@ -400,6 +466,10 @@ h3 {
   .slotAssignment {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  #ruleTransformChoices {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -413,22 +483,48 @@ h3 {
   .hero,
   .iconShell,
   .panel,
+  .navButton,
   .slotList article,
   .settingRow,
   .templateCard,
   .templateForm,
   .templateForm input,
   .templateForm textarea,
+  .templateForm select,
+  .ruleTransforms label,
   .switch,
   .lockedBadge,
   .slotAssignment label,
+  .templateActions button,
   .shortcutButton.isUnset {
     border-color: rgba(129, 140, 248, 0.22);
     background: rgba(17, 24, 39, 0.74);
   }
 
-  .shortcutButton.isUnset {
+  .navButton,
+  .secondaryButton,
+  .shortcutButton.isUnset,
+  .templateActions button {
     color: #e5e7eb;
+  }
+
+  .navButton.isActive,
+  .addTemplateButton,
+  .templateFormActions button:not(.secondaryButton),
+  .shortcutButton:not(.isUnset) {
+    border-color: rgba(129, 140, 248, 0.34);
+    background: #6366f1;
+    color: #fff;
+  }
+
+  .secondaryButton {
+    border-color: rgba(129, 140, 248, 0.22) !important;
+    background: rgba(17, 24, 39, 0.74) !important;
+    color: #e5e7eb !important;
+  }
+
+  .templateActions button:disabled {
+    color: #94a3b8;
   }
 
   .lead,
@@ -439,11 +535,23 @@ h3 {
     color: #94a3b8;
   }
 
-  .templateForm label {
+  .templateForm label,
+  .ruleTransforms legend {
     color: #e5e7eb;
   }
 
   .slotAssignment legend {
     color: #e5e7eb;
+  }
+
+  .templateForm input::placeholder,
+  .templateForm textarea::placeholder {
+    color: #64748b;
+  }
+
+  .formError {
+    border-color: rgba(248, 113, 113, 0.26);
+    background: rgba(127, 29, 29, 0.36);
+    color: #fecaca;
   }
 }
