@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>clim home</title>
+    <link rel="stylesheet" href="home.css">
+  </head>
+  <body>
+    <main class="home">
+      <header class="hero">
+        <img src="../../icons/icon-128.png" alt="" width="72" height="72">
+        <div>
+          <h1>clim</h1>
+          <p>日本語Webページを、クリーンなMarkdown/Scrapbox/HTMLリンクとしてコピーします。</p>
+        </div>
+      </header>
+
+      <section>
+        <h2>使い方</h2>
+        <div class="grid">
+          <article>
+            <h3>ショートカット</h3>
+            <p>Markdownリンクは初期設定でコピーできます。</p>
+            <dl>
+              <div>
+                <dt>Windows/Linux</dt>
+                <dd>Alt + Shift + C</dd>
+              </div>
+              <div>
+                <dt>Mac</dt>
+                <dd>Control + Shift + C</dd>
+              </div>
+            </dl>
+          </article>
+          <article>
+            <h3>右クリック</h3>
+            <p>ページ上で右クリックし、climでクリーンコピーから形式を選べます。</p>
+          </article>
+          <article>
+            <h3>カスタマイズ</h3>
+            <p>サイト名の除去やドメインごとのトリミングルールは設定ページで変更できます。</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>対応フォーマット</h2>
+        <ul class="formats">
+          <li><code>[タイトル](URL)</code></li>
+          <li><code>[タイトル URL]</code></li>
+          <li><code>タイトル URL</code></li>
+          <li><code>&lt;a href="URL"&gt;タイトル&lt;/a&gt;</code></li>
+          <li><code>frontmatter + Markdown</code></li>
+          <li><code>選択テキスト引用 + Markdown</code></li>
+        </ul>
+      </section>
+
+      <nav class="actions" aria-label="clim pages">
+        <button id="openOptions" type="button">設定ページを開く</button>
+        <button id="openShortcuts" type="button" class="secondary">ショートカット設定を開く</button>
+      </nav>
+    </main>
+
+    <script src="home.js"></script>
+  </body>
+</html>

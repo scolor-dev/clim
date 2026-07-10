@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "clim",
   "description": "日本語WebページをクリーンなMarkdown/Scrapbox/HTMLリンクとして素早くコピーします。",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -11,6 +11,7 @@
   },
   "action": {
     "default_title": "clim",
+    "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
@@ -19,7 +20,7 @@
     }
   },
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "src/background/background.js",
     "type": "module"
   },
   "permissions": [
@@ -29,7 +30,7 @@
     "contextMenus",
     "storage"
   ],
-  "options_page": "options.html",
+  "options_page": "src/options/options.html",
   "host_permissions": [
     "http://*/*",
     "https://*/*"
@@ -67,8 +68,11 @@
         "https://*/*"
       ],
       "js": [
-        "shared-config.js",
-        "content.js"
+        "src/shared/shared-config.js",
+        "src/content/clim-utils.js",
+        "src/content/clim-metadata.js",
+        "src/content/clim-formatters.js",
+        "src/content/content.js"
       ],
       "run_at": "document_idle"
     }
