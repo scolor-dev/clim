@@ -1,42 +1,35 @@
-// clim: ページ上でコピー処理を実行するcontent scriptの入口。
+// Clim: 現在ページのURLをそのままクリップボードへコピーする。
 
 if (!globalThis.__climContentScriptReady) {
   globalThis.__climContentScriptReady = true;
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type !== "CLIM_COPY_LINK" && message?.type !== "CLIM_COPY_MARKDOWN_LINK") {
+    if (message?.type === "CLIM_PING") {
+      sendResponse({ ok: true });
       return false;
     }
 
-    const format = message.type === "CLIM_COPY_MARKDOWN_LINK" ? "markdown" : message.format;
+    if (message?.type !== "CLIM_COPY_CURRENT_URL") {
+      return false;
+    }
 
-    copyCurrentPageLink(format)
+    copyCurrentUrl()
       .then((text) => {
-        const label = CLIM_FORMAT_LABELS[format] ?? "リンク";
-        showToast(`${label}リンクをコピーしました`);
+        showToast("URLをコピーしました", "success");
         sendResponse({ ok: true, text });
       })
       .catch((error) => {
-        console.error("[clim] コピーに失敗しました。", error);
-        showToast("コピーに失敗しました");
+        console.error("[Clim] URLコピーに失敗しました。", error);
+        showToast("コピーに失敗しました", "error");
         sendResponse({ ok: false, error: String(error) });
       });
 
-    // 非同期でsendResponseするためtrueを返します。
     return true;
   });
 }
 
-async function copyCurrentPageLink(format = "markdown") {
-  const siteSettings = await getSiteSettings();
-  const outputTemplates = await getOutputTemplates();
-  const trimmingRules = getTrimmingRulesFromSiteSettings(siteSettings, window.location.href);
-  const pageMetadata = getPageMetadata(window.location.href, siteSettings);
-  const baseTitle = getBestPageTitle(document.title, window.location.href, trimmingRules, pageMetadata, siteSettings);
-  const cleanTitle = enrichTitle(baseTitle, pageMetadata);
-  const decodedUrl = decodeJapaneseUrl(window.location.href);
-  const text = formatLink(format, cleanTitle, decodedUrl, pageMetadata, outputTemplates);
-
+async function copyCurrentUrl() {
+  const text = window.location.href;
   await writeToClipboard(text);
   return text;
 }
@@ -47,8 +40,7 @@ async function writeToClipboard(text) {
       await navigator.clipboard.writeText(text);
       return;
     } catch (error) {
-      // HTTPページやフォーカス状態によってClipboard APIが拒否される場合は旧APIへフォールバックします。
-      console.warn("[clim] navigator.clipboard.writeText failed. fallbackします。", error);
+      console.warn("[Clim] navigator.clipboard.writeText failed. fallbackします。", error);
     }
   }
 
@@ -80,30 +72,44 @@ function fallbackCopyText(text) {
   }
 }
 
-function showToast(message) {
+function showToast(message, status = "success") {
   const existingToast = document.getElementById("clim-copy-toast");
   existingToast?.remove();
 
   const toast = document.createElement("div");
   toast.id = "clim-copy-toast";
-  toast.textContent = message;
+  toast.setAttribute("role", "status");
+  toast.textContent = `${status === "success" ? "✓" : "!"} ${message}`;
   toast.style.cssText = `
     position: fixed;
     right: 16px;
     bottom: 16px;
     z-index: 2147483647;
-    padding: 8px 12px;
+    max-width: min(320px, calc(100vw - 32px));
+    padding: 8px 11px;
     border-radius: 8px;
-    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid ${status === "success" ? "rgba(148, 163, 184, 0.32)" : "rgba(248, 113, 113, 0.38)"};
+    background: ${status === "success" ? "rgba(17, 24, 39, 0.92)" : "rgba(127, 29, 29, 0.92)"};
     color: #fff;
-    font: 600 13px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.24);
+    font: 500 12px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    box-shadow: 0 8px 20px rgba(17, 24, 39, 0.18);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 140ms ease, transform 140ms ease;
     pointer-events: none;
   `;
 
   document.documentElement.appendChild(toast);
+  window.requestAnimationFrame(() => {
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+  });
 
   window.setTimeout(() => {
-    toast.remove();
-  }, 1000);
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(8px)";
+    window.setTimeout(() => {
+      toast.remove();
+    }, 160);
+  }, 1200);
 }

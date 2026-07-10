@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "clim",
-  "description": "日本語WebページをクリーンなMarkdown/Scrapbox/HTMLリンクとして素早くコピーします。",
+  "name": "Clim - クリム",
+  "description": "Clim は現在のページURLをショートカットや右クリックから素早くコピーします。",
   "version": "1.1.0",
   "icons": {
     "16": "icons/icon-16.png",
@@ -10,7 +10,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "clim",
+    "default_title": "Clim",
     "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -20,61 +20,23 @@
     }
   },
   "background": {
-    "service_worker": "src/background/background.js",
-    "type": "module"
+    "service_worker": "src/background/background.js"
   },
   "permissions": [
     "activeTab",
     "clipboardWrite",
-    "scripting",
     "contextMenus",
-    "storage"
-  ],
-  "options_page": "src/options/options.html",
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
+    "scripting"
   ],
   "commands": {
-    "copy-markdown-link": {
+    "copy-current-url": {
       "suggested_key": {
         "default": "Alt+Shift+C",
         "windows": "Alt+Shift+C",
         "linux": "Alt+Shift+C",
         "mac": "MacCtrl+Shift+C"
       },
-      "description": "現在のページをMarkdownリンクとしてコピー"
-    },
-    "copy-markdown-frontmatter-link": {
-      "description": "現在のページをfrontmatter付きMarkdownとしてコピー"
-    },
-    "copy-markdown-quote-link": {
-      "description": "選択テキストを引用してMarkdownリンクとしてコピー"
-    },
-    "copy-scrapbox-link": {
-      "description": "現在のページをScrapboxリンクとしてコピー"
-    },
-    "copy-plain-text-link": {
-      "description": "現在のページをプレーンテキストとしてコピー"
-    },
-    "copy-html-link": {
-      "description": "現在のページをHTMLリンクとしてコピー"
+      "description": "現在のページURLをコピー"
     }
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": [
-        "src/shared/shared-config.js",
-        "src/content/clim-utils.js",
-        "src/content/clim-metadata.js",
-        "src/content/clim-formatters.js",
-        "src/content/content.js"
-      ],
-      "run_at": "document_idle"
-    }
-  ]
+  }
 }

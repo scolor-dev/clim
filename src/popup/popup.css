@@ -1,10 +1,14 @@
 :root {
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  width: 220px;
+  width: 240px;
   margin: 0;
   background: #f8fafc;
   color: #111827;
@@ -14,11 +18,15 @@ body {
   padding: 14px;
 }
 
-header {
+.header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.header img {
+  display: block;
 }
 
 h1,
@@ -27,33 +35,40 @@ p {
 }
 
 h1 {
-  font-size: 17px;
-  line-height: 1.2;
+  font-size: 18px;
+  line-height: 1.1;
 }
 
 p {
-  color: #64748b;
-  font-size: 12px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.menu {
+  display: grid;
+  gap: 8px;
 }
 
 button {
   width: 100%;
   min-height: 38px;
-  border: 0;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0 12px;
-  background: #0f172a;
-  color: #fff;
-  font-weight: 700;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  text-align: left;
   cursor: pointer;
 }
 
-button + button {
-  margin-top: 8px;
-}
-
-button.secondary {
-  background: #e2e8f0;
+button:hover {
+  border-color: #94a3b8;
   color: #0f172a;
 }
 
@@ -63,17 +78,9 @@ button.secondary {
     color: #e5e7eb;
   }
 
-  p {
-    color: #94a3b8;
-  }
-
   button {
-    background: #e5e7eb;
-    color: #0f172a;
-  }
-
-  button.secondary {
-    background: #334155;
+    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(17, 24, 39, 0.74);
     color: #e5e7eb;
   }
 }

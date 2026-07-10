@@ -3,21 +3,24 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>clim</title>
+    <title>Clim</title>
     <link rel="stylesheet" href="popup.css">
   </head>
   <body>
     <main class="popup">
-      <header>
-        <img src="../../icons/icon-48.png" alt="" width="32" height="32">
+      <header class="header">
+        <img src="../../icons/icon-48.png" alt="" width="40" height="40">
         <div>
-          <h1>clim</h1>
-          <p>クリーンリンク生成</p>
+          <h1>Clim</h1>
+          <p>clean link maker</p>
         </div>
       </header>
 
-      <button id="openHome" type="button">ホームページ</button>
-      <button id="openOptions" type="button" class="secondary">設定ページ</button>
+      <nav class="menu" aria-label="Clim pages">
+        <button id="openHome" type="button">ホームページ</button>
+        <button id="openSettings" type="button">設定</button>
+        <button id="openShortcuts" type="button">ショートカット</button>
+      </nav>
     </main>
 
     <script src="popup.js"></script>

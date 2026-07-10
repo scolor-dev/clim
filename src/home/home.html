@@ -3,65 +3,48 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>clim home</title>
+    <title>Clim home</title>
     <link rel="stylesheet" href="home.css">
   </head>
   <body>
     <main class="home">
-      <header class="hero">
-        <img src="../../icons/icon-128.png" alt="" width="72" height="72">
-        <div>
-          <h1>clim</h1>
-          <p>日本語Webページを、クリーンなMarkdown/Scrapbox/HTMLリンクとしてコピーします。</p>
+      <section class="hero" aria-labelledby="pageTitle">
+        <div class="iconShell">
+          <img src="../../icons/icon-128.png" alt="" width="88" height="88">
         </div>
-      </header>
-
-      <section>
-        <h2>使い方</h2>
-        <div class="grid">
-          <article>
-            <h3>ショートカット</h3>
-            <p>Markdownリンクは初期設定でコピーできます。</p>
-            <dl>
-              <div>
-                <dt>Windows/Linux</dt>
-                <dd>Alt + Shift + C</dd>
-              </div>
-              <div>
-                <dt>Mac</dt>
-                <dd>Control + Shift + C</dd>
-              </div>
-            </dl>
-          </article>
-          <article>
-            <h3>右クリック</h3>
-            <p>ページ上で右クリックし、climでクリーンコピーから形式を選べます。</p>
-          </article>
-          <article>
-            <h3>カスタマイズ</h3>
-            <p>サイト名の除去やドメインごとのトリミングルールは設定ページで変更できます。</p>
-          </article>
-        </div>
+        <p class="eyebrow">clean link maker</p>
+        <h1 id="pageTitle">Clim</h1>
+        <p class="lead">現在のページURLを、ショートカットや右クリックからそのままコピーできる小さな土台です。</p>
+        <nav class="actions" aria-label="Clim pages">
+          <button id="openSettings" type="button">設定を開く</button>
+          <button id="openShortcuts" type="button" class="secondary">ショートカット</button>
+        </nav>
       </section>
 
-      <section>
-        <h2>対応フォーマット</h2>
-        <ul class="formats">
-          <li><code>[タイトル](URL)</code></li>
-          <li><code>[タイトル URL]</code></li>
-          <li><code>タイトル URL</code></li>
-          <li><code>&lt;a href="URL"&gt;タイトル&lt;/a&gt;</code></li>
-          <li><code>frontmatter + Markdown</code></li>
-          <li><code>選択テキスト引用 + Markdown</code></li>
-        </ul>
+      <section class="status" aria-label="current status">
+        <article>
+          <span class="mark"></span>
+          <div>
+            <h2>URLコピー</h2>
+            <p>内部処理は空に近く、現在のページURLを加工せずそのままコピーします。</p>
+          </div>
+        </article>
+        <article>
+          <span class="mark"></span>
+          <div>
+            <h2>ショートカット</h2>
+            <p>Alt + Shift + C、MacではControl + Shift + Cでコピーできます。</p>
+          </div>
+        </article>
+        <article>
+          <span class="mark"></span>
+          <div>
+            <h2>ページ右クリック</h2>
+            <p>Webページ上の右クリックメニューからClimでURLをコピーできます。</p>
+          </div>
+        </article>
       </section>
-
-      <nav class="actions" aria-label="clim pages">
-        <button id="openOptions" type="button">設定ページを開く</button>
-        <button id="openShortcuts" type="button" class="secondary">ショートカット設定を開く</button>
-      </nav>
     </main>
-
     <script src="home.js"></script>
   </body>
 </html>
