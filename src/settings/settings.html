@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Clim settings</title>
+    <title>Clim 設定</title>
     <link rel="stylesheet" href="settings.css">
   </head>
   <body>
@@ -15,14 +15,14 @@
         <div>
           <p class="eyebrow">settings</p>
           <h1>Clim 設定</h1>
-          <p class="lead">現在はURLをそのままコピーする最小構成です。4つのショートカットスロットを用意しています。</p>
+          <p class="lead">ショートカット、コピー形式、差し込み項目を整えて、よく使うリンクコピーを自分の作業に合わせられます。</p>
         </div>
       </header>
 
       <nav class="settingsNav" aria-label="設定カテゴリ">
         <button class="navButton isActive" type="button" data-tab-button="settingsPanel">設定</button>
         <button class="navButton" type="button" data-tab-button="templatesPanel">テンプレート</button>
-        <button class="navButton" type="button" data-tab-button="rulesPanel">ルールと変数</button>
+        <button class="navButton" type="button" data-tab-button="rulesPanel">差し込み</button>
       </nav>
 
       <section class="panel" id="settingsPanel" aria-labelledby="settingsTitle" data-tab-panel>
@@ -84,7 +84,7 @@
             <span>本文</span>
             <textarea id="templateBody" rows="6" required></textarea>
           </label>
-          <p class="templateHelp">利用可能: {{url}}, {{title}}, {{canonicalUrl}}, {{description}}, {{siteName}}, {{author}}, {{selectedText}}, {{domain}}, {{date}}, {{datetime}}, {{cleanTitle}}, {{urlSlug}}。ルール画面で独自変数も追加できます。</p>
+          <p class="templateHelp">利用可能: {{url}}, {{title}}, {{canonicalUrl}}, {{description}}, {{siteName}}, {{author}}, {{selectedText}}, {{domain}}, {{date}}, {{datetime}}, {{cleanTitle}}, {{urlSlug}}。差し込み画面で独自の項目も追加できます。</p>
           <div class="templateFormActions">
             <button type="submit">保存</button>
             <button type="button" class="secondaryButton" id="cancelTemplate">キャンセル</button>
@@ -97,18 +97,18 @@
       <section class="panel" id="rulesPanel" aria-labelledby="rulesTitle" data-tab-panel hidden>
         <div class="panelHeader">
           <div>
-            <p class="eyebrow">rules and variables</p>
-            <h2 id="rulesTitle">ルールと変数</h2>
+            <p class="eyebrow">insert items</p>
+            <h2 id="rulesTitle">差し込み</h2>
           </div>
         </div>
 
         <section class="ruleSection" aria-labelledby="transformTitle">
           <div class="panelHeader">
             <div>
-              <h3 id="transformTitle">変換ルール</h3>
-              <p class="templateHelp">値を整える処理です。変数ルールから組み合わせて使います。</p>
+              <h3 id="transformTitle">整形ルール</h3>
+              <p class="templateHelp">URLデコードや文字置換など、値を整える処理です。差し込み項目から組み合わせて使います。</p>
             </div>
-            <button class="addTemplateButton" type="button" id="addTransform">変換追加</button>
+            <button class="addTemplateButton" type="button" id="addTransform">整形追加</button>
           </div>
 
           <form class="templateForm" id="transformForm" hidden>
@@ -117,11 +117,11 @@
               <input type="text" id="transformName" maxlength="40" required>
             </label>
             <label>
-              <span>処理ID</span>
+              <span>整形キー</span>
               <input type="text" id="transformId" pattern="[A-Za-z][A-Za-z0-9]*" required>
             </label>
             <label>
-              <span>処理タイプ</span>
+              <span>整形タイプ</span>
               <select id="transformType" required>
                 <option value="replace">正規表現で置換</option>
                 <option value="prepend">先頭に追加</option>
@@ -136,7 +136,7 @@
               <span>置換/追加文字</span>
               <input type="text" id="transformValue">
             </label>
-            <p class="templateHelp">処理IDは他の変換ルールと重複できません。正規表現置換では検索パターンを必ず指定してください。</p>
+            <p class="templateHelp">整形キーは他の整形ルールと重複できません。正規表現置換では検索パターンを必ず指定してください。</p>
             <p class="formError" id="transformError" role="alert" hidden></p>
             <div class="templateFormActions">
               <button type="submit">保存</button>
@@ -150,10 +150,10 @@
         <section class="ruleSection" aria-labelledby="variableTitle">
           <div class="panelHeader">
             <div>
-              <h3 id="variableTitle">変数</h3>
-              <p class="templateHelp">取得元から値を取り出し、変換ルールを通してテンプレート変数を作ります。</p>
+              <h3 id="variableTitle">差し込み項目</h3>
+              <p class="templateHelp">ページタイトルやURLから値を取り出し、整形ルールを通してテンプレートで使える項目を作ります。</p>
             </div>
-            <button class="addTemplateButton" type="button" id="addRule">変数追加</button>
+            <button class="addTemplateButton" type="button" id="addRule">項目追加</button>
           </div>
 
         <form class="templateForm" id="ruleForm" hidden>
@@ -162,7 +162,7 @@
             <input type="text" id="ruleName" maxlength="40" required>
           </label>
           <label>
-            <span>変数名</span>
+            <span>差し込み名</span>
             <input type="text" id="ruleVariable" pattern="[A-Za-z][A-Za-z0-9]*" required>
           </label>
           <label>
@@ -179,10 +179,10 @@
             <input type="text" id="rulePattern" placeholder="([^/]+)\\/?$">
           </label>
           <fieldset class="ruleTransforms">
-            <legend>変換</legend>
+            <legend>使う整形ルール</legend>
             <div id="ruleTransformChoices"></div>
           </fieldset>
-          <p class="templateHelp">変数名は基本セットや他のルールと重複できません。テンプレートでは {{変数名}} として使えます。</p>
+          <p class="templateHelp">差し込み名は基本セットや他の項目と重複できません。テンプレートでは {{差し込み名}} として使えます。</p>
           <p class="formError" id="ruleError" role="alert" hidden></p>
           <div class="templateFormActions">
             <button type="submit">保存</button>

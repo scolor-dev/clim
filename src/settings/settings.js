@@ -376,7 +376,7 @@ function createRuleCard(rule) {
       <code></code>
       <code></code>
     </div>
-    <div class="templateActions" aria-label="ルール操作">
+    <div class="templateActions" aria-label="差し込み項目操作">
       <button type="button" data-edit-rule></button>
       <button type="button" data-delete-rule></button>
     </div>
@@ -384,14 +384,14 @@ function createRuleCard(rule) {
 
   card.querySelector("h3").textContent = rule.name;
   card.querySelector(".templateHeader p").textContent = rule.readonly
-    ? "初期ルールです。テンプレート変数として利用できます。"
-    : "ユーザー追加ルールです。";
-  card.querySelector(".lockedBadge").textContent = rule.readonly ? "初期ルール" : "カスタム";
+    ? "初期項目です。テンプレートでそのまま使えます。"
+    : "ユーザー追加の差し込み項目です。";
+  card.querySelector(".lockedBadge").textContent = rule.readonly ? "初期項目" : "カスタム";
 
   const [variableCode, sourceCode, transformCode] = card.querySelectorAll("code");
   variableCode.textContent = `{{${rule.variable}}}`;
   sourceCode.textContent = `取得元: ${getRuleSourceLabel(rule.source)}${rule.pattern ? ` / ${rule.pattern}` : ""}`;
-  transformCode.textContent = `変換: ${rule.transforms?.length ? rule.transforms.join(", ") : "なし"}`;
+  transformCode.textContent = `整形: ${rule.transforms?.length ? rule.transforms.join(", ") : "なし"}`;
 
   const editButton = card.querySelector("[data-edit-rule]");
   editButton.textContent = rule.readonly ? "編集不可" : "編集";
@@ -427,7 +427,7 @@ function createTransformCard(transform) {
       <code></code>
       <code></code>
     </div>
-    <div class="templateActions" aria-label="変換ルール操作">
+    <div class="templateActions" aria-label="整形ルール操作">
       <button type="button" data-edit-transform></button>
       <button type="button" data-delete-transform></button>
     </div>
@@ -435,8 +435,8 @@ function createTransformCard(transform) {
 
   card.querySelector("h3").textContent = transform.name;
   card.querySelector(".templateHeader p").textContent = transform.readonly
-    ? "組み込み変換です。変数ルールから利用できます。"
-    : "ユーザー追加変換です。";
+    ? "組み込みの整形ルールです。差し込み項目から利用できます。"
+    : "ユーザー追加の整形ルールです。";
   card.querySelector(".lockedBadge").textContent = transform.readonly ? "組み込み" : "カスタム";
 
   const [idCode, detailCode] = card.querySelectorAll("code");
@@ -886,23 +886,23 @@ function findTemplate(templateId) {
 
 function validateRuleVariable(variable, currentRuleId = "") {
   if (!/^[A-Za-z][A-Za-z0-9]*$/.test(variable)) {
-    return "変数名は半角英字ではじめ、半角英数字のみで入力してください。";
+    return "差し込み名は半角英字ではじめ、半角英数字のみで入力してください。";
   }
 
   if (BASE_VARIABLE_NAMES.has(variable)) {
-    return "基本セットと同じ変数名は使えません。";
+    return "基本セットと同じ差し込み名は使えません。";
   }
 
   const duplicatedRule = climOptions.variableRules.find((rule) =>
     rule.variable === variable && rule.id !== currentRuleId
   );
 
-  return duplicatedRule ? "同じ変数名のルールがすでにあります。" : "";
+  return duplicatedRule ? "同じ差し込み名の項目がすでにあります。" : "";
 }
 
 function validateTransformRule(transform, currentTransformId = "") {
   if (!/^[A-Za-z][A-Za-z0-9]*$/.test(transform.id)) {
-    return "処理IDは半角英字ではじめ、半角英数字のみで入力してください。";
+    return "整形キーは半角英字ではじめ、半角英数字のみで入力してください。";
   }
 
   const duplicatedTransform = climOptions.transformRules.find((rule) =>
@@ -910,7 +910,7 @@ function validateTransformRule(transform, currentTransformId = "") {
   );
 
   if (duplicatedTransform) {
-    return "同じ処理IDの変換ルールがすでにあります。";
+    return "同じ整形キーのルールがすでにあります。";
   }
 
   if (transform.type === "replace" && !transform.pattern) {
@@ -964,7 +964,7 @@ function getTransformDescription(transform) {
     return `末尾に追加: ${transform.value || ""}`;
   }
 
-  return "組み込み変換";
+  return "組み込み整形";
 }
 
 function openShortcutSettings() {
